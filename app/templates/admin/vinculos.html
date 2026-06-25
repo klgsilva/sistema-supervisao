@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Vínculo supervisor x lojas</h1></div>
+
+<form method="get" class="form-inline">
+    <select name="supervisor_id" required onchange="this.form.submit()">
+        <option value="">Selecione o supervisor(a)</option>
+        {% for supervisor in supervisores %}
+        <option value="{{ supervisor.id }}" {% if supervisor.id == supervisor_id %}selected{% endif %}>{{ supervisor.nome }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+{% if supervisor_id %}
+<form method="post" class="form-card">
+    <input type="hidden" name="supervisor_id" value="{{ supervisor_id }}">
+    <div class="checkbox-grid">
+        {% for loja in lojas %}
+        <label class="check tile">
+            <input type="checkbox" name="lojas" value="{{ loja.id }}" {% if loja.id in selecionadas %}checked{% endif %}>
+            {{ loja.nome }}
+        </label>
+        {% endfor %}
+    </div>
+    <button type="submit">Salvar vínculos</button>
+</form>
+{% endif %}
+{% endblock %}

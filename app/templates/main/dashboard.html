@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Painel</h1>
+        <p>{{ current_user.nome }} · {{ hoje.strftime("%d/%m/%Y") }}</p>
+    </div>
+    {% if not current_user.is_admin %}
+    <a class="button" href="{{ url_for('visitas.nova') }}">Registrar visita</a>
+    {% endif %}
+</div>
+
+<section class="stats-grid">
+    <div class="stat-card">
+        <span>Lojas da Mara Frios</span>
+        <strong>{{ lojas|length }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Visitadas hoje</span>
+        <strong>{{ visitas_hoje|length }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Pendentes</span>
+        <strong>{{ pendentes|length }}</strong>
+    </div>
+    <div class="stat-card danger">
+        <span>Ocorrências ativas</span>
+        <strong>{{ ocorrencias|length }}</strong>
+    </div>
+</section>
+
+<section class="grid two">
+    <div>
+        <h2>Lojas visitadas hoje</h2>
+        <div class="list">
+            {% for visita in visitas_hoje %}
+            <a class="list-row" href="{{ url_for('visitas.detalhe', visita_id=visita.id) }}">
+                <span>{{ visita.loja.nome }}</span>
+                <small>{{ visita.venda_dia|brl }} · {{ visita.supervisor.nome }}</small>
+            </a>
+            {% else %}
+            <p class="empty">Nenhuma visita registrada hoje.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <h2>Pendentes hoje</h2>
+        <div class="list">
+            {% for loja in pendentes %}
+            <div class="list-row">
+                <span>{{ loja.nome }}</span>
+                <small><a href="{{ url_for('visitas.historico_loja', loja_id=loja.id) }}">Histórico</a></small>
+            </div>
+            {% else %}
+            <p class="empty">Todas as lojas desta visão já foram visitadas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section>
+    <h2>Ocorrências ativas</h2>
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead>
+                <tr>
+                    <th>Loja</th>
+                    <th>Item</th>
+                    <th>Descrição</th>
+                    <th>Abertura</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ocorrencia in ocorrencias %}
+                <tr>
+                    <td data-label="Loja">{{ ocorrencia.loja.nome }}</td>
+                    <td data-label="Item">{{ ocorrencia.checklist_item.descricao }}</td>
+                    <td data-label="Descricao">{{ ocorrencia.descricao }}</td>
+                    <td data-label="Abertura">{{ ocorrencia.data_abertura.strftime("%d/%m/%Y") }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">Sem ocorrências ativas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

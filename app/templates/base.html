@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Sistema de Visita de Supervisão{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <header class="topbar">
+        <a class="brand" href="{{ url_for('main.dashboard') }}">
+            <span class="brand-greeting">Olá,</span>
+            <span>{{ current_user.nome }}</span>
+        </a>
+        <button class="menu-toggle" type="button" data-menu-toggle aria-label="Abrir menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav class="nav" data-menu>
+            <a href="{{ url_for('main.dashboard') }}">Painel</a>
+            <a href="{{ url_for('main.relatorios') }}">Relatórios</a>
+            <a href="{{ url_for('main.balancos') }}">Balanços</a>
+            <a href="{{ url_for('main.manutencoes') }}">Manutenções</a>
+            {% if not current_user.is_admin %}
+            <a href="{{ url_for('visitas.nova') }}">Nova visita</a>
+            {% endif %}
+            <a href="{{ url_for('visitas.ocorrencias') }}">Ocorrências</a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.lojas') }}">Lojas</a>
+            <a href="{{ url_for('admin.supervisores') }}">Supervisores</a>
+            <a href="{{ url_for('admin.vinculos') }}">Vínculos</a>
+            <a href="{{ url_for('admin.checklist') }}">Checklist</a>
+            {% endif %}
+            <a href="{{ url_for('auth.logout') }}">Sair</a>
+        </nav>
+    </header>
+    {% endif %}
+
+    <main class="container">
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% if mensagens %}
+            <div class="messages">
+                {% for categoria, mensagem in mensagens %}
+                <div class="message {{ categoria }}">{{ mensagem }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

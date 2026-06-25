@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Manutenções</h1>
+        <p>Controle de solicitações de refrigeração, câmara frigorífica e manutenção padrão das lojas.</p>
+    </div>
+</div>
+
+<section class="stats-grid">
+    <div class="stat-card">
+        <span>Abertas</span>
+        <strong>{{ abertas }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Refrigeração / Câmara</span>
+        <strong>{{ refrigeracao_abertas }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Manutenção padrão</span>
+        <strong>{{ padrao_abertas }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Custo filtrado</span>
+        <strong>{{ total_custo|brl }}</strong>
+    </div>
+</section>
+
+{% if not current_user.is_admin %}
+<section>
+    <h2>Escolha a loja para preencher</h2>
+    <form method="get" class="form-inline">
+        <label>
+            Loja
+            <select name="loja_id" required onchange="this.form.submit()">
+                <option value="">Selecione uma loja</option>
+                {% for loja in lojas %}
+                <option value="{{ loja.id }}" {% if loja.id == loja_id %}selected{% endif %}>{{ loja.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </form>
+</section>
+
+{% if loja_id %}
+<section>
+    <h2>Nova manutenção{% if loja_selecionada %} - {{ loja_selecionada.nome }}{% endif %}</h2>
+    <form method="post" action="{{ url_for('main.criar_manutencao') }}" class="form-card" enctype="multipart/form-data">
+        <input type="hidden" name="loja_id" value="{{ loja_id }}">
+        <div class="grid three">
+            <label>
+                Categoria
+                <select name="categoria" required>
+                    <option value="refrigeracao">Refrigeração / Câmara fria</option>
+                    <option value="padrao">Manutenção padrão</option>
+                </select>
+            </label>
+            <label>
+                Tipo
+                <select name="tipo" required>
+                    <option value="corretiva">Corretiva</option>
+                    <option value="preventiva">Preventiva</option>
+                </select>
+            </label>
+            <label>
+                Status
+                <select name="status" required>
+                    <option value="pendente">Pendente</option>
+                    <option value="em_andamento">Em andamento</option>
+                    <option value="concluido">Concluído</option>
+                </select>
+            </label>
+        </div>
+        <div class="grid two">
+            <label>
+                Equipamento ou área
+                <input name="area_equipamento" placeholder="Ex: câmara congelados, caixas, banheiro" required>
+            </label>
+            <label>
+                Responsável
+                <input name="responsavel" placeholder="Ex: David, Fernandes, terceirizada">
+            </label>
+        </div>
+        <label>
+            Custo
+            <input name="custo" inputmode="decimal" data-money placeholder="0,00">
+        </label>
+        <div class="evidence-photo">
+            Foto opcional
+            <div class="photo-actions">
+                <label>
+                    Tirar foto
+                    <input type="file" name="foto_camera" accept="image/*" capture="environment">
+                </label>
+                <label>
+                    Galeria
+                    <input type="file" name="foto_galeria" accept="image/*">
+                </label>
+            </div>
+            <small class="photo-status" data-photo-status>Nenhuma foto adicionada</small>
+        </div>
+        <label>
+            Problema identificado
+            <textarea name="problema" rows="3" placeholder="Descreva o que precisa ser feito" required></textarea>
+        </label>
+        <div class="grid two">
+            <label>
+                Data da solicitação
+                <input type="date" name="data_solicitacao" value="{{ hoje.isoformat() }}">
+            </label>
+            <label>
+                Data de atendimento
+                <input type="date" name="data_atendimento">
+            </label>
+        </div>
+        <label>
+            Observação
+            <textarea name="observacao" rows="2" placeholder="Ex: solicitado, aguardando retorno"></textarea>
+        </label>
+        <button type="submit">Registrar manutenção</button>
+    </form>
+</section>
+{% else %}
+<section>
+    <p class="empty">Selecione uma loja para registrar ou visualizar manutenções.</p>
+</section>
+{% endif %}
+{% endif %}
+
+<section id="historico">
+    <div class="section-head">
+        <h2>Histórico de manutenções</h2>
+        <form method="get" class="filter-form compact-filter">
+            {% if loja_id %}
+            <input type="hidden" name="loja_id" value="{{ loja_id }}">
+            {% endif %}
+            <label>
+                Loja
+                <select name="historico_loja_id">
+                    <option value="">Escolher loja</option>
+                    <option value="todas" {% if historico_todas %}selected{% endif %}>Todas as lojas</option>
+                    {% for loja in lojas %}
+                    <option value="{{ loja.id }}" {% if loja.id == historico_loja_id %}selected{% endif %}>{{ loja.nome }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Categoria
+                <select name="categoria">
+                    <option value="">Todas</option>
+                    <option value="refrigeracao" {% if categoria == "refrigeracao" %}selected{% endif %}>Refrigeração / Câmara</option>
+                    <option value="padrao" {% if categoria == "padrao" %}selected{% endif %}>Manutenção padrão</option>
+                </select>
+            </label>
+            <label>
+                Status
+                <select name="status">
+                    <option value="">Todos</option>
+                    <option value="pendente" {% if status == "pendente" %}selected{% endif %}>Pendente</option>
+                    <option value="em_andamento" {% if status == "em_andamento" %}selected{% endif %}>Em andamento</option>
+                    <option value="concluido" {% if status == "concluido" %}selected{% endif %}>Concluído</option>
+                    <option value="cancelado" {% if status == "cancelado" %}selected{% endif %}>Cancelado</option>
+                </select>
+            </label>
+            <input type="hidden" name="scroll_to" value="historico">
+            <button type="submit">Filtrar</button>
+        </form>
+    </div>
+    {% if not historico_filtrado %}
+    <p class="empty">Use o filtro do histórico para visualizar as manutenções.</p>
+    {% elif registros %}
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Loja</th>
+                    <th>Categoria</th>
+                    <th>Área/equipamento</th>
+                    <th>Problema</th>
+                    <th>Tipo</th>
+                    <th>Responsável</th>
+                    <th>Custo</th>
+                    <th>Foto</th>
+                    <th>Atendimento</th>
+                    <th>Status</th>
+                    <th>Atualizar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in registros %}
+                <tr>
+                    <td data-label="Data">{{ item.data_solicitacao.strftime("%d/%m/%Y") }}</td>
+                    <td data-label="Loja">{{ item.loja.nome }}</td>
+                    <td data-label="Categoria">
+                        {% if item.categoria == "refrigeracao" %}
+                        Refrigeração / Câmara
+                        {% else %}
+                        Manutenção padrão
+                        {% endif %}
+                    </td>
+                    <td data-label="Área">{{ item.area_equipamento }}</td>
+                    <td data-label="Problema">{{ item.problema }}{% if item.observacao %}<br><small>{{ item.observacao }}</small>{% endif %}</td>
+                    <td data-label="Tipo">{{ item.tipo|capitalize }}</td>
+                    <td data-label="Responsável">{{ item.responsavel or "-" }}</td>
+                    <td data-label="Custo">{{ item.custo|brl }}</td>
+                    <td data-label="Foto">
+                        {% if item.foto_path %}
+                        <a href="{{ url_for('static', filename=item.foto_path) }}" target="_blank">
+                            <img class="occurrence-thumb" src="{{ url_for('static', filename=item.foto_path) }}" alt="Foto da manutenção">
+                        </a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td data-label="Atendimento">{{ item.data_atendimento.strftime("%d/%m/%Y") if item.data_atendimento else "-" }}</td>
+                    <td data-label="Status"><span class="badge {{ item.status }}">{{ item.status.replace("_", " ") }}</span></td>
+                    <td data-label="Atualizar">
+                        <form method="post" action="{{ url_for('main.atualizar_status_manutencao', manutencao_id=item.id) }}" class="status-form">
+                            <select name="status">
+                                <option value="pendente" {% if item.status == "pendente" %}selected{% endif %}>Pendente</option>
+                                <option value="em_andamento" {% if item.status == "em_andamento" %}selected{% endif %}>Em andamento</option>
+                                <option value="concluido" {% if item.status == "concluido" %}selected{% endif %}>Concluído</option>
+                                <option value="cancelado" {% if item.status == "cancelado" %}selected{% endif %}>Cancelado</option>
+                            </select>
+                            <input type="date" name="data_atendimento" value="{{ item.data_atendimento.isoformat() if item.data_atendimento else '' }}">
+                            <input name="custo" inputmode="decimal" data-money value="{{ '%.2f'|format(item.custo|float) }}" placeholder="0,00">
+                            <input name="observacao" value="{{ item.observacao or '' }}" placeholder="Observação">
+                            <button type="submit">Salvar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty">Nenhuma manutenção encontrada para os filtros selecionados.</p>
+    {% endif %}
+</section>
+{% endblock %}

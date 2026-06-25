@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Visita #{{ visita.id }}</h1>
+        <p>{{ visita.loja.nome }} · {{ visita.data_visita.strftime("%d/%m/%Y") }} · {{ visita.venda_dia|brl }}</p>
+    </div>
+    <a class="button secondary" href="{{ url_for('visitas.historico_loja', loja_id=visita.loja_id) }}">Histórico da loja</a>
+</div>
+
+{% if visita.observacao %}
+<section><h2>Observação</h2><p>{{ visita.observacao }}</p></section>
+{% endif %}
+
+<section>
+    <h2>Checklist</h2>
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead><tr><th>Setor</th><th>Item</th><th>Status</th><th>Comentário</th><th>Foto</th></tr></thead>
+            <tbody>
+                {% for resposta in visita.respostas %}
+                {% set ocorrencia = visita.ocorrencias|selectattr("checklist_item_id", "equalto", resposta.checklist_item_id)|first %}
+                <tr>
+                    <td data-label="Setor">{{ resposta.checklist_item.setor }}</td>
+                    <td data-label="Item">{{ resposta.checklist_item.descricao }}</td>
+                    <td data-label="Status">
+                        {% if resposta.status == "INFO" %}
+                        <span class="badge info">Informativo</span>
+                        {% else %}
+                        <span class="badge {{ resposta.status|lower }}">{{ resposta.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Comentario">{{ resposta.comentario or "-" }}</td>
+                    <td data-label="Foto">
+                        {% if resposta.foto_path %}
+                        <a href="{{ url_for('static', filename=resposta.foto_path) }}" target="_blank">
+                            {% if resposta.status == "OK" %}Ver foto OK{% elif resposta.status == "NOK" %}Ver foto NOK{% else %}Ver foto{% endif %}
+                        </a>
+                        {% elif ocorrencia and ocorrencia.foto_path %}
+                        <a href="{{ url_for('static', filename=ocorrencia.foto_path) }}" target="_blank">Ver foto NOK</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

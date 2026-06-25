@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Ocorrências</h1></div>
+<div class="table-wrap">
+    <table class="mobile-card-table">
+        <thead>
+            <tr>
+                <th>Loja</th>
+                <th>Item</th>
+                <th>Descrição</th>
+                <th>Foto</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ocorrencia in ocorrencias %}
+            <tr>
+                <td data-label="Loja">{{ ocorrencia.loja.nome }}</td>
+                <td data-label="Item">{{ ocorrencia.checklist_item.descricao }}</td>
+                <td data-label="Descricao">{{ ocorrencia.descricao }}</td>
+                <td data-label="Foto">
+                    {% if ocorrencia.foto_path %}
+                    <a href="{{ url_for('static', filename=ocorrencia.foto_path) }}" target="_blank">
+                        <img class="occurrence-thumb" src="{{ url_for('static', filename=ocorrencia.foto_path) }}" alt="Foto da ocorrência">
+                    </a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td data-label="Status"><span class="badge {{ ocorrencia.status }}">{{ ocorrencia.status.replace("_", " ") }}</span></td>
+                <td data-label="Acao">
+                    <form method="post" action="{{ url_for('visitas.atualizar_status_ocorrencia', ocorrencia_id=ocorrencia.id) }}" class="status-form">
+                        <select name="status">
+                            <option value="aberta" {% if ocorrencia.status == "aberta" %}selected{% endif %}>Aberta</option>
+                            <option value="em_andamento" {% if ocorrencia.status == "em_andamento" %}selected{% endif %}>Em andamento</option>
+                            <option value="resolvida" {% if ocorrencia.status == "resolvida" %}selected{% endif %}>Resolvida</option>
+                            <option value="cancelada" {% if ocorrencia.status == "cancelada" %}selected{% endif %}>Cancelada</option>
+                        </select>
+                        <button type="submit">Salvar</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">Nenhuma ocorrência encontrada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

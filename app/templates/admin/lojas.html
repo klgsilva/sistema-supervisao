@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Lojas</h1></div>
+<form method="post" class="form-inline">
+    <input name="nome" placeholder="Nome da loja" required>
+    <input name="codigo" placeholder="Código" required>
+    <label class="check"><input type="checkbox" name="ativa" checked> Ativa</label>
+    <button type="submit">Cadastrar</button>
+</form>
+
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Nome</th><th>Código</th><th>Ativa</th><th>Ação</th></tr></thead>
+        <tbody>
+            {% for loja in lojas %}
+            <tr>
+                <form method="post" action="{{ url_for('admin.editar_loja', loja_id=loja.id) }}">
+                    <td><input name="nome" value="{{ loja.nome }}" required></td>
+                    <td><input name="codigo" value="{{ loja.codigo }}" required></td>
+                    <td><input type="checkbox" name="ativa" {% if loja.ativa %}checked{% endif %}></td>
+                    <td><button type="submit">Salvar</button></td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<section>
+    <h2>Corredores por loja</h2>
+    <form method="get" class="form-inline">
+        <label>
+            Escolha a loja
+            <select name="corredor_loja_id" onchange="this.form.submit()">
+                <option value="">Selecione uma loja</option>
+                {% for loja in lojas %}
+                <option value="{{ loja.id }}" {% if loja.id == corredor_loja_id %}selected{% endif %}>{{ loja.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Ver corredores</button>
+    </form>
+
+    {% if corredor_loja_id %}
+    <form method="post" action="{{ url_for('main.criar_corredor_balanco') }}" class="form-inline">
+        <input type="hidden" name="loja_id" value="{{ corredor_loja_id }}">
+        <label>
+            Corredor/setor
+            <input name="nome" placeholder="Ex: Açougue" required>
+        </label>
+        <label>
+            Descrição
+            <input name="descricao" placeholder="Ex: carnes, frios, ilha">
+        </label>
+        <label>
+            Sequência
+            <input type="number" name="ordem" value="0">
+        </label>
+        <button type="submit">Adicionar corredor</button>
+    </form>
+
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead>
+                <tr>
+                    <th>Loja</th>
+                    <th>Corredor/setor</th>
+                    <th>Descrição</th>
+                    <th>Sequência</th>
+                    <th>Ativo</th>
+                    <th>Ação</th>
+                    <th>Excluir</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for corredor in todos_corredores %}
+                <tr>
+                    <form method="post" action="{{ url_for('main.atualizar_corredor_balanco', corredor_id=corredor.id) }}">
+                        <td data-label="Loja">{{ corredor.loja.nome }}</td>
+                        <td data-label="Corredor"><input name="nome" value="{{ corredor.nome }}" required></td>
+                        <td data-label="Descrição"><input name="descricao" value="{{ corredor.descricao or '' }}"></td>
+                        <td data-label="Sequência"><input type="number" name="ordem" value="{{ corredor.ordem }}"></td>
+                        <td data-label="Ativo"><input type="checkbox" name="ativo" {% if corredor.ativo %}checked{% endif %}></td>
+                        <td data-label="Ação"><button type="submit">Salvar</button></td>
+                    </form>
+                    <td data-label="Excluir">
+                        <form method="post" action="{{ url_for('main.excluir_corredor_balanco', corredor_id=corredor.id) }}" onsubmit="return confirm('Excluir este corredor?');">
+                            <button type="submit" class="danger-button">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">Nenhum corredor cadastrado para esta loja.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty">Selecione uma loja para cadastrar ou visualizar os corredores.</p>
+    {% endif %}
+</section>
+{% endblock %}

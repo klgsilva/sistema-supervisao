@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Balanços</h1>
+        <p>Controle de liberação, lançamento e revisão dos balanços das lojas.</p>
+    </div>
+    <form method="get" class="filter-form">
+        {% if current_user.is_admin %}
+        <label>
+            Balanço liberado
+            <select name="ciclo_id">
+                <option value="">Sem ciclo</option>
+                {% for ciclo in ciclos_balanco %}
+                <option value="{{ ciclo.id }}" {% if ciclo_balanco and ciclo.id == ciclo_balanco.id %}selected{% endif %}>
+                    {{ ciclo.competencia_mes.strftime("%m/%Y") }} - {{ ciclo.data_contagem.strftime("%d/%m/%Y") }} - {{ ciclo.status }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Supervisores
+            <select name="supervisor_id">
+                <option value="">Todas</option>
+                {% for supervisor in supervisores %}
+                <option value="{{ supervisor.id }}" {% if supervisor.id == supervisor_id %}selected{% endif %}>{{ supervisor.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Filtrar</button>
+        {% endif %}
+    </form>
+</div>
+
+<section class="stats-grid">
+    <div class="stat-card">
+        <span>Total considerado</span>
+        <strong>{{ total_balanco|brl }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Lojas analisadas</span>
+        <strong>{{ resumo_lojas|length }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Lojas lançadas</span>
+        <strong>{{ total_lancados }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Pendentes</span>
+        <strong>{{ resumo_lojas|length - total_lancados }}</strong>
+    </div>
+</section>
+
+<section>
+    <h2>Balanço liberado</h2>
+    {% if ciclo_balanco %}
+    <div class="list">
+        <div class="list-row">
+            <span>Competência {{ ciclo_balanco.competencia_mes.strftime("%m/%Y") }} · Contagem em {{ ciclo_balanco.data_contagem.strftime("%d/%m/%Y") }}</span>
+            <small>Status: {{ ciclo_balanco.status }}</small>
+        </div>
+    </div>
+    {% else %}
+    <p class="empty">Nenhum balanço liberado selecionado.</p>
+    {% endif %}
+
+    {% if current_user.is_admin %}
+        {% if not ciclo_balanco %}
+        <form method="post" action="{{ url_for('main.criar_ciclo_balanco') }}" class="form-inline">
+            <label>
+                Competência
+                <input type="month" name="competencia_mes" value="{{ mes_valor }}" required>
+            </label>
+            <label>
+                Data da contagem
+                <input type="date" name="data_contagem" value="{{ data_dia_valor }}" required>
+            </label>
+            <label>
+                Observação
+                <input name="observacao" placeholder="Ex: balanço do domingo">
+            </label>
+            <button type="submit">Liberar balanço</button>
+        </form>
+        {% else %}
+        <p class="empty">Este balanço já foi liberado. Para evitar erro, competência e data da contagem ficam bloqueadas.</p>
+        <form method="post" action="{{ url_for('main.atualizar_status_ciclo_balanco', ciclo_id=ciclo_balanco.id) }}" class="form-inline">
+            <label>
+                Alterar status
+                <select name="status">
+                    <option value="aberto" {% if ciclo_balanco.status == "aberto" %}selected{% endif %}>Aberto</option>
+                    <option value="fechado" {% if ciclo_balanco.status == "fechado" %}selected{% endif %}>Fechado</option>
+                    <option value="cancelado" {% if ciclo_balanco.status == "cancelado" %}selected{% endif %}>Cancelado</option>
+                </select>
+            </label>
+            <button type="submit">Atualizar status</button>
+        </form>
+        {% endif %}
+    {% endif %}
+</section>
+
+<section>
+    <h2>Lançar balanço da loja</h2>
+    {% if not ciclo_balanco %}
+    <p class="empty">Nenhum balanço liberado para lançamento.</p>
+    {% elif not current_user.is_admin and ciclo_balanco.status != "aberto" %}
+    <p class="empty">Este balanço está {{ ciclo_balanco.status }} e não aceita novos lançamentos.</p>
+    {% else %}
+    <form method="get" class="form-inline">
+        {% if ciclo_balanco %}
+        <input type="hidden" name="ciclo_id" value="{{ ciclo_balanco.id }}">
+        {% endif %}
+        {% if current_user.is_admin and supervisor_id %}
+        <input type="hidden" name="supervisor_id" value="{{ supervisor_id }}">
+        {% endif %}
+        <label>
+            Loja para lançar
+            <select name="balanco_loja_id" onchange="this.form.submit()">
+                <option value="">Selecione uma loja</option>
+                {% for loja in lojas %}
+                <option value="{{ loja.id }}" {% if loja.id == balanco_loja_id %}selected{% endif %}>{{ loja.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Ver corredores</button>
+    </form>
+
+    {% if not balanco_loja_id %}
+    <p class="empty">Selecione uma loja para lançar ou revisar o balanço.</p>
+    {% else %}
+    <form method="post" action="{{ url_for('main.salvar_balancos') }}">
+        <input type="hidden" name="ciclo_id" value="{{ ciclo_balanco.id }}">
+        <div class="balance-store-list">
+            {% for item in resumo_lancamento %}
+            <div class="balance-store" data-balance-store>
+                <div class="balance-store-head">
+                    <div>
+                        <h3>{{ item.loja.nome }}</h3>
+                        {% if item.lancamento_completo %}
+                        <small class="badge success">Lançado e bloqueado</small>
+                        {% elif item.corredores_lancados %}
+                        <small class="badge warning">{{ item.corredores_lancados }} de {{ item.total_corredores }} corredores lançados</small>
+                        {% else %}
+                        <small class="badge warning">Pendente</small>
+                        {% endif %}
+                    </div>
+                    <strong data-store-total>{{ item.valor_balanco|brl }}</strong>
+                </div>
+
+                {% if not item.corredores %}
+                <p class="empty">Nenhum corredor cadastrado para esta loja.</p>
+                {% else %}
+                <div class="table-wrap">
+                    <table class="mobile-card-table">
+                        <thead>
+                            <tr>
+                                <th>Corredor/setor</th>
+                                <th>Valor fechado</th>
+                                <th>Observação</th>
+                                {% if current_user.is_admin %}
+                                <th>Valor revisado</th>
+                                <th>Observação da revisão</th>
+                                <th>Diferença</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for corredor in item.corredores %}
+                            {% set valor = item.valores_por_corredor.get(corredor.id) %}
+                            {% set fechado = valor.valor_fechado if valor else 0 %}
+                            {% set revisado = valor.valor_revisado if valor and valor.valor_revisado is not none else none %}
+                            {% set corredor_lancado = valor is not none %}
+                            <tr>
+                                <td data-label="Corredor">{{ corredor.nome }}{% if corredor.descricao %}<br><small>{{ corredor.descricao }}</small>{% endif %}</td>
+                                <td data-label="Valor fechado">
+                                    {% if current_user.is_admin or corredor_lancado %}
+                                    {{ fechado|brl }}
+                                    {% if not current_user.is_admin and corredor_lancado %}
+                                    <br><small class="badge success">Já lançado</small>
+                                    {% endif %}
+                                    {% else %}
+                                    <input name="corredor_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money data-balance-value value="" placeholder="0,00">
+                                    {% endif %}
+                                </td>
+                                <td data-label="Observação">
+                                    {% if current_user.is_admin or corredor_lancado %}
+                                    {{ valor.observacao if valor and valor.observacao else "-" }}
+                                    {% else %}
+                                    <input name="observacao_corredor_{{ item.loja.id }}_{{ corredor.id }}" placeholder="Opcional">
+                                    {% endif %}
+                                </td>
+                                {% if current_user.is_admin %}
+                                <td data-label="Valor revisado">
+                                    {% if corredor_lancado %}
+                                    <input name="revisao_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money value="{{ '%.2f'|format(revisado|float) if revisado is not none else '' }}" placeholder="0,00">
+                                    {% else %}
+                                    <span class="muted">Aguardando supervisor (a)</span>
+                                    {% endif %}
+                                </td>
+                                <td data-label="Obs. revisão">
+                                    {% if corredor_lancado %}
+                                    <input name="observacao_revisao_{{ item.loja.id }}_{{ corredor.id }}" value="{{ valor.observacao_revisao if valor and valor.observacao_revisao else '' }}" placeholder="Opcional">
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td data-label="Diferença" class="{% if revisado is not none and revisado - fechado < 0 %}negative{% elif revisado is not none and revisado - fechado > 0 %}positive{% endif %}">
+                                    {{ ((revisado - fechado)|brl) if revisado is not none else "-" }}
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                {% if not current_user.is_admin and item.lancamento_completo %}
+                <p class="empty">Todos os corredores desta loja já foram lançados neste balanço.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% if pode_salvar_lancamento %}
+        <button type="submit">Salvar balanço</button>
+        {% endif %}
+    </form>
+    {% endif %}
+    {% endif %}
+</section>
+{% endblock %}

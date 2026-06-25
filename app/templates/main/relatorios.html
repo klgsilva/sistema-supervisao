@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Relatórios</h1>
+        <p>Relatório de {{ periodo_label }} · Balanço referente a {{ mes_valor }}</p>
+    </div>
+    <form method="get" class="filter-form">
+        <label>
+            Período
+            <select name="periodo" data-periodo-select>
+                <option value="mes" {% if periodo == "mes" %}selected{% endif %}>Mês</option>
+                <option value="dia" {% if periodo == "dia" %}selected{% endif %}>Dia</option>
+                <option value="intervalo" {% if periodo == "intervalo" %}selected{% endif %}>Periodo escolhido</option>
+            </select>
+        </label>
+        <label>
+            Mês
+            <input type="month" name="mes" value="{{ mes_valor }}" data-month-filter>
+        </label>
+        <label>
+            Dia
+            <input type="date" name="data_dia" value="{{ data_dia_valor }}" data-day-filter>
+        </label>
+        <label>
+            Data inicial
+            <input type="date" name="data_inicio" value="{{ data_inicio_valor }}" data-range-start-filter>
+        </label>
+        <label>
+            Data final
+            <input type="date" name="data_fim" value="{{ data_fim_valor }}" data-range-end-filter>
+        </label>
+        {% if current_user.is_admin %}
+        <label>
+            Balanço
+            <select name="ciclo_id">
+                <option value="">Sem ciclo</option>
+                {% for ciclo in ciclos_balanco %}
+                <option value="{{ ciclo.id }}" {% if ciclo_balanco and ciclo.id == ciclo_balanco.id %}selected{% endif %}>
+                    {{ ciclo.competencia_mes.strftime("%m/%Y") }} - {{ ciclo.data_contagem.strftime("%d/%m/%Y") }} - {{ ciclo.status }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Supervisores
+            <select name="supervisor_id">
+                <option value="">Todas</option>
+                {% for supervisor in supervisores %}
+                <option value="{{ supervisor.id }}" {% if supervisor.id == supervisor_id %}selected{% endif %}>{{ supervisor.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        {% endif %}
+        <button type="submit">Filtrar</button>
+        <a class="button secondary" href="{{ url_for('main.exportar_relatorio', periodo=periodo, mes=mes_valor, data_dia=data_dia_valor, data_inicio=data_inicio_valor, data_fim=data_fim_valor, ciclo_id=ciclo_balanco.id if ciclo_balanco else '', supervisor_id=supervisor_id or '') }}">Exportar CSV</a>
+    </form>
+</div>
+
+<section class="stats-grid">
+    <div class="stat-card">
+        <span>Balanço considerado do mês</span>
+        <strong>{{ total_balanco|brl }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Vendas registradas nas visitas</span>
+        <strong>{{ total_vendas_visitas|brl }}</strong>
+    </div>
+    <div class="stat-card danger">
+        <span>Problemas registrados</span>
+        <strong>{{ total_ocorrencias }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Lojas analisadas</span>
+        <strong>{{ resumo_lojas|length }}</strong>
+    </div>
+</section>
+
+<div class="section-switcher">
+    <label>
+        O que deseja ver?
+        <select data-report-section-select>
+            <option value="">Selecione uma opção</option>
+            <option value="rankings">Rankings</option>
+            <option value="visitas_supervisor">Visitas por supervisor (a)</option>
+            <option value="comparacao">Balanço e comparação</option>
+        </select>
+    </label>
+</div>
+
+<section class="grid two" data-report-section="rankings">
+    <div>
+        <h2>Lojas que mais venderam no dia a dia</h2>
+        <div class="list">
+            {% for item in ranking_vendas %}
+            <div class="list-row">
+                <span>{{ loop.index }}. {{ item.loja.nome }}</span>
+                <small>{{ item.total_venda|brl }} somados nas visitas · {{ item.visitas }} visita(s)</small>
+            </div>
+            {% else %}
+            <p class="empty">Sem vendas registradas nas visitas do mês.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <h2>Lojas com mais problemas</h2>
+        <div class="list">
+            {% for item in ranking_problemas %}
+            <div class="list-row">
+                <span>{{ loop.index }}. {{ item.loja.nome }}</span>
+                <small>{{ item.ocorrencias }} problema(s) · {{ item.abertas }} aberta(s)</small>
+            </div>
+            {% else %}
+            <p class="empty">Sem problemas registrados no mês.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section data-report-section="visitas_supervisor">
+    <h2>Visitas por supervisor (a)</h2>
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Supervisor (a)</th>
+                    <th>Loja</th>
+                    <th>Venda</th>
+                    <th>OK</th>
+                    <th>NOK</th>
+                    <th>Informativo</th>
+                    <th>Ocorrências</th>
+                    <th>Abertas</th>
+                    <th>Detalhe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in visitas_detalhadas %}
+                <tr>
+                    <td data-label="Data">{{ item.visita.data_visita.strftime("%d/%m/%Y") }}</td>
+                    <td data-label="Supervisor (a)">{{ item.visita.supervisor.nome }}</td>
+                    <td data-label="Loja">{{ item.visita.loja.nome }}</td>
+                    <td data-label="Venda">{{ item.visita.venda_dia|brl }}</td>
+                    <td data-label="OK">{{ item.ok }}</td>
+                    <td data-label="NOK">{{ item.nok }}</td>
+                    <td data-label="Informativo">{{ item.info }}</td>
+                    <td data-label="Ocorrências">{{ item.ocorrencias }}</td>
+                    <td data-label="Abertas">{{ item.abertas }}</td>
+                    <td data-label="Detalhe"><a href="{{ url_for('visitas.detalhe', visita_id=item.visita.id) }}">Abrir</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10">Nenhuma visita encontrada para os filtros selecionados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section data-report-section="comparacao">
+    <h2>Balanço e comparação por loja</h2>
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead>
+                <tr>
+                    <th>Loja</th>
+                    <th>Valor fechado</th>
+                    <th>Valor revisado</th>
+                    <th>Dif. revisão</th>
+                    <th>Valor considerado</th>
+                    <th>Mês anterior</th>
+                    <th>Diferença</th>
+                    <th>Variação</th>
+                    <th>Visitas</th>
+                    <th>Vendas nas visitas</th>
+                    <th>Média por visita</th>
+                    <th>Problemas</th>
+                    <th>Abertas</th>
+                    <th>Resolvidas</th>
+                    <th>Histórico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in resumo_lojas %}
+                <tr>
+                    <td data-label="Loja">{{ item.loja.nome }}</td>
+                    <td data-label="Valor fechado">{{ item.valor_fechado|brl }}</td>
+                    <td data-label="Valor revisado">{{ (item.valor_revisado|brl) if item.valor_revisado is not none else "-" }}</td>
+                    <td data-label="Dif. revisao" class="{% if item.diferenca_revisao is not none and item.diferenca_revisao < 0 %}negative{% elif item.diferenca_revisao is not none and item.diferenca_revisao > 0 %}positive{% endif %}">
+                        {{ (item.diferenca_revisao|brl) if item.diferenca_revisao is not none else "-" }}
+                    </td>
+                    <td data-label="Valor considerado">{{ item.valor_balanco|brl }}</td>
+                    <td data-label="Mes anterior">{{ item.valor_anterior|brl }}</td>
+                    <td data-label="Diferenca" class="{% if item.diferenca < 0 %}negative{% elif item.diferenca > 0 %}positive{% endif %}">
+                        {{ item.diferenca|brl }}
+                    </td>
+                    <td data-label="Variacao">
+                        {% if item.percentual is none %}
+                        -
+                        {% else %}
+                        <span class="{% if item.percentual < 0 %}negative{% elif item.percentual > 0 %}positive{% endif %}">
+                            {{ "%.2f"|format(item.percentual) }}%
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Visitas">{{ item.visitas }}</td>
+                    <td data-label="Vendas nas visitas">{{ item.total_venda|brl }}</td>
+                    <td data-label="Media por visita">{{ item.media_venda|brl }}</td>
+                    <td data-label="Problemas">{{ item.ocorrencias }}</td>
+                    <td data-label="Abertas">{{ item.abertas }}</td>
+                    <td data-label="Resolvidas">{{ item.resolvidas }}</td>
+                    <td data-label="Historico"><a href="{{ url_for('visitas.historico_loja', loja_id=item.loja.id) }}">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

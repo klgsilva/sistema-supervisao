@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Registrar visita</h1></div>
+
+<form method="post" class="form-card visit-form" enctype="multipart/form-data">
+    <label>
+        Loja
+        <select name="loja_id" required data-loja-select>
+            <option value="">Selecione uma loja pendente</option>
+            {% for loja in lojas %}
+            <option value="{{ loja.id }}">{{ loja.nome }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    {% if not lojas %}
+    <p class="empty">Todas as suas lojas já foram visitadas hoje. Amanhã a lista fica disponível novamente.</p>
+    {% endif %}
+
+    <div class="visit-details hidden" data-visit-details>
+        <div class="pending-alert hidden" data-no-pending-alert>
+            Nenhuma ocorrência ativa para esta loja.
+        </div>
+
+        {% for loja in lojas %}
+            {% set pendencias = ocorrencias_ativas.get(loja.id, []) %}
+            {% if pendencias %}
+            <div class="pending-alert hidden" data-pending-store="{{ loja.id }}">
+                <h2>Pendências abertas desta loja</h2>
+                <p>Verifique se o problema foi sanado nesta visita e atualize o status antes de concluir.</p>
+                {% for ocorrencia in pendencias %}
+                <div class="pending-item">
+                    <input type="hidden" name="ocorrencia_id" value="{{ ocorrencia.id }}">
+                    <div>
+                        <strong>{{ ocorrencia.checklist_item.descricao }}</strong>
+                        <small>{{ ocorrencia.descricao }}</small>
+                    </div>
+                    {% if ocorrencia.foto_path %}
+                    <a href="{{ url_for('static', filename=ocorrencia.foto_path) }}" target="_blank">Ver foto</a>
+                    {% endif %}
+                    <label>
+                        Status
+                        <select name="ocorrencia_status_{{ ocorrencia.id }}">
+                            <option value="aberta" {% if ocorrencia.status == "aberta" %}selected{% endif %}>Ainda aberta</option>
+                            <option value="em_andamento" {% if ocorrencia.status == "em_andamento" %}selected{% endif %}>Em andamento</option>
+                            <option value="resolvida">Resolvida</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endfor %}
+
+        <label>
+            Venda do dia anterior
+            <input name="venda_dia" inputmode="decimal" placeholder="0,00" required data-money>
+        </label>
+
+        <label>
+            Observação geral
+            <textarea name="observacao" rows="3"></textarea>
+        </label>
+
+        <h2>Checklist operacional</h2>
+        <div class="checklist">
+            {% for setor, grupo in itens|groupby("setor") %}
+            <div class="check-section">
+                <h3>{{ setor }}</h3>
+                {% for item in grupo %}
+                <fieldset class="check-item">
+                    <legend>{{ item.descricao }}</legend>
+                    {% if item_texto_livre(item) %}
+                    <textarea name="comentario_{{ item.id }}" rows="2" placeholder="Digite aqui"></textarea>
+                    {% else %}
+                    <div class="segmented">
+                        <label><input type="radio" name="status_{{ item.id }}" value="OK" checked data-status> OK</label>
+                        <label><input type="radio" name="status_{{ item.id }}" value="NOK" data-status> NOK</label>
+                    </div>
+                    {% if item.setor != "Reuniões" %}
+                    <div class="evidence-photo">
+                        <span data-photo-label>Foto OK (opcional)</span>
+                        <div class="photo-actions">
+                            <label>
+                                Tirar foto
+                                <input type="file" name="foto_camera_{{ item.id }}" accept="image/*" capture="environment">
+                            </label>
+                            <label>
+                                Galeria
+                                <input type="file" name="foto_galeria_{{ item.id }}" accept="image/*">
+                            </label>
+                        </div>
+                        <small class="photo-status" data-photo-status>Nenhuma foto adicionada</small>
+                    </div>
+                    {% endif %}
+                    <div class="nok-extra" data-nok-extra>
+                        <textarea name="comentario_{{ item.id }}" rows="2" placeholder="Comentário obrigatório se NOK" data-comment></textarea>
+                    </div>
+                    {% endif %}
+                </fieldset>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit" {% if not lojas %}disabled{% endif %}>Concluir visita</button>
+    </div>
+</form>
+{% endblock %}

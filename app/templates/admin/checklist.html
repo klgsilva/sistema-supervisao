@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><h1>Itens de checklist</h1></div>
+<form method="post" class="form-inline">
+    <input name="setor" placeholder="Setor" required>
+    <input name="descricao" placeholder="Descrição do item" required>
+    <label class="check"><input type="checkbox" name="ativo" checked> Ativo</label>
+    <button type="submit">Cadastrar</button>
+</form>
+
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Setor</th><th>Descrição</th><th>Ativo</th><th>Ação</th></tr></thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <form method="post" action="{{ url_for('admin.editar_checklist', item_id=item.id) }}">
+                    <td><input name="setor" value="{{ item.setor }}" required></td>
+                    <td><input name="descricao" value="{{ item.descricao }}" required></td>
+                    <td><input type="checkbox" name="ativo" {% if item.ativo %}checked{% endif %}></td>
+                    <td><button type="submit">Salvar</button></td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

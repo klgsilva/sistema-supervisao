@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Login - Sistema de Visita de Supervisão{% endblock %}
+{% block content %}
+<section class="auth-box login-box">
+    <div class="login-brand">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo da empresa" onerror="this.style.display='none'">
+        <h1>Sistema de Visita de Supervisão</h1>
+    </div>
+    <form method="post" class="form-card">
+        <label>
+            E-mail
+            <input type="email" name="email" required autofocus>
+        </label>
+        <label>
+            Senha
+            <input type="password" name="senha" required>
+        </label>
+        <button type="submit">Entrar</button>
+    </form>
+    <p class="developer-credit">by: Ricardo Klinger</p>
+</section>
+{% endblock %}
