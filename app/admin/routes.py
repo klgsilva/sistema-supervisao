@@ -4,10 +4,25 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import ChecklistItem, CorredorLoja, Loja, SupervisorLoja, Usuario
+from app.models import BALANCO_ITENS_FIXOS, ChecklistItem, CorredorLoja, Loja, SupervisorLoja, Usuario
 
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+def criar_itens_fixos_balanco(loja):
+    for ordem, nome_item in enumerate(BALANCO_ITENS_FIXOS, start=1):
+        existe = CorredorLoja.query.filter_by(loja_id=loja.id, nome=nome_item).first()
+        if not existe:
+            db.session.add(
+                CorredorLoja(
+                    loja_id=loja.id,
+                    nome=nome_item,
+                    descricao="Item fixo do balanço",
+                    ordem=-100 + ordem,
+                    ativo=True,
+                )
+            )
 
 
 def admin_required(view):
@@ -31,6 +46,8 @@ def lojas():
             ativa=bool(request.form.get("ativa")),
         )
         db.session.add(loja)
+        db.session.flush()
+        criar_itens_fixos_balanco(loja)
         db.session.commit()
         flash("Loja cadastrada.", "success")
         return redirect(url_for("admin.lojas"))
@@ -52,6 +69,7 @@ def lojas():
         lojas=lojas_lista,
         corredor_loja_id=corredor_loja_id,
         todos_corredores=todos_corredores,
+        itens_fixos_balanco=BALANCO_ITENS_FIXOS,
     )
 
 
