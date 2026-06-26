@@ -2,7 +2,7 @@ import os
 
 from app import create_app
 from app.extensions import db
-from app.models import ChecklistItem, Loja, SupervisorLoja, Usuario
+from app.models import BALANCO_ITENS_FIXOS, ChecklistItem, CorredorLoja, Loja, SupervisorLoja, Usuario
 from sqlalchemy import inspect, text
 
 
@@ -113,6 +113,24 @@ def seed():
                 db.session.add(loja)
             lojas_por_nome[nome] = loja
         db.session.flush()
+
+        for loja in lojas_por_nome.values():
+            for ordem, nome_item in enumerate(BALANCO_ITENS_FIXOS, start=1):
+                item = CorredorLoja.query.filter_by(loja_id=loja.id, nome=nome_item).first()
+                if not item:
+                    db.session.add(
+                        CorredorLoja(
+                            loja_id=loja.id,
+                            nome=nome_item,
+                            descricao="Item fixo do balanço",
+                            ordem=-100 + ordem,
+                            ativo=True,
+                        )
+                    )
+                else:
+                    item.descricao = item.descricao or "Item fixo do balanço"
+                    item.ordem = -100 + ordem
+                    item.ativo = True
 
         for setor, descricao in CHECKLIST:
             existe = ChecklistItem.query.filter_by(setor=setor, descricao=descricao).first()
