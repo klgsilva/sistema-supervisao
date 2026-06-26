@@ -8,6 +8,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.extensions import db, login_manager
 
 
+BALANCO_ITENS_FIXOS = ("Avarias/Loja", "Remanejamento", "Descartes", "Uso e consumo")
+
+
 class Usuario(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
