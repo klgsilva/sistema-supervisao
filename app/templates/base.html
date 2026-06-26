@@ -23,7 +23,6 @@
             <a href="{{ url_for('main.relatorios') }}">Relatórios</a>
             <a href="{{ url_for('main.balancos') }}">Balanços</a>
             <a href="{{ url_for('main.manutencoes') }}">Manutenções</a>
-            <a href="{{ url_for('main.manual') }}">Manual</a>
             {% if not current_user.is_admin %}
             <a href="{{ url_for('visitas.nova') }}">Nova visita</a>
             {% endif %}
@@ -37,6 +36,10 @@
             <a href="{{ url_for('auth.logout') }}">Sair</a>
         </nav>
     </header>
+    <a class="help-float" href="{{ url_for('main.manual') }}" aria-label="Abrir manual de ajuda">
+        <span>?</span>
+        <strong>Ajuda</strong>
+    </a>
     {% endif %}
 
     <main class="container">
