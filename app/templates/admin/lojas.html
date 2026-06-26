@@ -77,16 +77,23 @@
                 <tr>
                     <form method="post" action="{{ url_for('main.atualizar_corredor_balanco', corredor_id=corredor.id) }}">
                         <td data-label="Loja">{{ corredor.loja.nome }}</td>
-                        <td data-label="Corredor"><input name="nome" value="{{ corredor.nome }}" required></td>
+                        <td data-label="Corredor">
+                            <input name="nome" value="{{ corredor.nome }}" {% if corredor.nome in itens_fixos_balanco %}readonly{% endif %} required>
+                            {% if corredor.nome in itens_fixos_balanco %}<br><small class="badge info">Item fixo</small>{% endif %}
+                        </td>
                         <td data-label="Descrição"><input name="descricao" value="{{ corredor.descricao or '' }}"></td>
                         <td data-label="Sequência"><input type="number" name="ordem" value="{{ corredor.ordem }}"></td>
                         <td data-label="Ativo"><input type="checkbox" name="ativo" {% if corredor.ativo %}checked{% endif %}></td>
                         <td data-label="Ação"><button type="submit">Salvar</button></td>
                     </form>
                     <td data-label="Excluir">
+                        {% if corredor.nome in itens_fixos_balanco %}
+                        <small class="muted">Fixo do balanço</small>
+                        {% else %}
                         <form method="post" action="{{ url_for('main.excluir_corredor_balanco', corredor_id=corredor.id) }}" onsubmit="return confirm('Excluir este corredor?');">
                             <button type="submit" class="danger-button">Excluir</button>
                         </form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% else %}
