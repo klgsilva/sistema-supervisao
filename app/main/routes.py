@@ -265,6 +265,12 @@ def dashboard():
     )
 
 
+@bp.route("/manual")
+@login_required
+def manual():
+    return render_template("main/manual.html")
+
+
 @bp.route("/manutencoes")
 @login_required
 def manutencoes():
