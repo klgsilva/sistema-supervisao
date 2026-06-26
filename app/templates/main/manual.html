@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Manual do sistema</h1>
+        <p>Guia rápido para admin e supervisor (a).</p>
+    </div>
+</div>
+
+<section>
+    <h2>Fluxo geral</h2>
+    <div class="manual-grid">
+        <div class="manual-card">
+            <strong>1. Cadastros</strong>
+            <p>O admin cadastra lojas, corredores, supervisor (a), vínculos e checklist.</p>
+        </div>
+        <div class="manual-card">
+            <strong>2. Visitas</strong>
+            <p>O supervisor (a) registra a visita, informa venda, responde checklist e adiciona fotos quando precisar.</p>
+        </div>
+        <div class="manual-card">
+            <strong>3. Acompanhamento</strong>
+            <p>O admin acompanha visitas, ocorrências, manutenções, balanços e relatórios.</p>
+        </div>
+    </div>
+</section>
+
+<section class="grid two">
+    <div>
+        <h2>Admin</h2>
+        <ul class="manual-list">
+            <li><strong>Lojas:</strong> cadastrar lojas e corredores/setores de cada loja.</li>
+            <li><strong>Supervisores:</strong> cadastrar, editar, ativar ou inativar supervisor (a).</li>
+            <li><strong>Vínculos:</strong> definir quais lojas pertencem a cada supervisor (a).</li>
+            <li><strong>Checklist:</strong> cadastrar e manter os itens que serão respondidos nas visitas.</li>
+            <li><strong>Ocorrências:</strong> acompanhar problemas abertos, em andamento, resolvidos ou cancelados.</li>
+            <li><strong>Manutenções:</strong> visualizar e analisar registros das lojas. Admin não registra manutenção.</li>
+            <li><strong>Balanços:</strong> liberar balanço, fechar ciclo e lançar valores revisados quando necessário.</li>
+            <li><strong>Relatórios:</strong> filtrar por dia, mês, período e supervisor (a).</li>
+        </ul>
+    </div>
+    <div>
+        <h2>Supervisor (a)</h2>
+        <ul class="manual-list">
+            <li><strong>Painel:</strong> ver lojas vinculadas, visitas do dia, pendências e ocorrências ativas.</li>
+            <li><strong>Nova visita:</strong> escolher uma loja pendente do dia e registrar a visita.</li>
+            <li><strong>Venda:</strong> informar a venda do dia anterior no formato em reais.</li>
+            <li><strong>Checklist:</strong> marcar OK quando estiver padrão e NOK quando estiver fora do padrão.</li>
+            <li><strong>NOK:</strong> comentário é obrigatório e gera ocorrência automaticamente.</li>
+            <li><strong>Foto OK:</strong> pode ser usada como evidência, mas não cria ocorrência.</li>
+            <li><strong>Manutenções:</strong> registrar problema, categoria, status, custo e foto opcional.</li>
+            <li><strong>Balanços:</strong> lançar valores por corredor quando o balanço estiver aberto.</li>
+        </ul>
+    </div>
+</section>
+
+<section>
+    <h2>Visitas e checklist</h2>
+    <div class="manual-grid">
+        <div class="manual-card">
+            <strong>OK</strong>
+            <p>Use quando o item está dentro do padrão. Pode anexar foto como evidência.</p>
+        </div>
+        <div class="manual-card">
+            <strong>NOK</strong>
+            <p>Use quando existe problema. O comentário é obrigatório e uma ocorrência aberta é criada automaticamente.</p>
+        </div>
+        <div class="manual-card">
+            <strong>Informativo</strong>
+            <p>Alguns itens têm apenas campo de texto, como assuntos tratados em reuniões.</p>
+        </div>
+        <div class="manual-card">
+            <strong>Fotos</strong>
+            <p>Use Tirar foto para abrir a câmera ou Galeria para escolher uma imagem salva.</p>
+        </div>
+    </div>
+</section>
+
+<section>
+    <h2>Manutenções</h2>
+    <ul class="manual-list">
+        <li>Supervisor (a) escolhe a loja e registra a manutenção.</li>
+        <li>Admin visualiza, filtra e analisa. Admin não dá entrada em manutenção.</li>
+        <li>Use <strong>Refrigeração / Câmara fria</strong> para equipamentos terceirizados e controle semanal.</li>
+        <li>Use <strong>Manutenção padrão</strong> para elétrica, computadores, estrutura e itens internos.</li>
+        <li>O campo custo serve para registrar gasto com material ou serviço.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Balanços</h2>
+    <ul class="manual-list">
+        <li>Admin libera o balanço informando competência e data da contagem.</li>
+        <li>Supervisor (a) lança os valores por corredor/setor da loja.</li>
+        <li>Corredor lançado fica bloqueado e não pode ser editado pelo supervisor (a).</li>
+        <li>Corredor sem valor continua disponível para lançamento posterior.</li>
+        <li>Valor 0,00 não conta como lançamento.</li>
+        <li>Admin pode lançar valor revisado quando houver correção da central.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Relatórios</h2>
+    <ul class="manual-list">
+        <li><strong>Rankings:</strong> lojas que mais venderam e lojas com mais problemas.</li>
+        <li><strong>Visitas por supervisor (a):</strong> mostra quais lojas foram visitadas por cada supervisor (a).</li>
+        <li><strong>Balanço e comparação:</strong> compara valor fechado, revisado e mês anterior.</li>
+        <li>Admin pode filtrar por supervisor (a). Supervisor (a) vê apenas suas lojas.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Regras importantes</h2>
+    <ul class="manual-list">
+        <li>Admin não registra visita.</li>
+        <li>Admin não registra manutenção.</li>
+        <li>Supervisor (a) vê apenas lojas vinculadas.</li>
+        <li>Cada loja permite uma visita por dia por supervisor (a).</li>
+        <li>No dia seguinte, a lista de visitas pendentes reinicia normalmente.</li>
+        <li>Checklist NOK exige comentário e cria ocorrência.</li>
+        <li>Balanço só aceita lançamento quando está aberto.</li>
+    </ul>
+</section>
+{% endblock %}
