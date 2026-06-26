@@ -715,6 +715,25 @@ th {
     font-size: 24px;
 }
 
+.balance-total-box {
+    text-align: right;
+}
+
+.balance-total-box small {
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.table-section-row td {
+    background: #f2f6ff;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 @media (max-width: 820px) {
     .topbar {
         align-items: center;
@@ -878,6 +897,21 @@ th {
     }
 
     .mobile-card-table td:first-child::before {
+        display: none;
+    }
+
+    .mobile-card-table .table-section-row {
+        border: 0;
+        margin: 6px 0 8px;
+    }
+
+    .mobile-card-table .table-section-row td {
+        display: block;
+        min-height: 0;
+        text-align: left;
+    }
+
+    .mobile-card-table .table-section-row td::before {
         display: none;
     }
 
