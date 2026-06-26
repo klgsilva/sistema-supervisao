@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models import (
+    BALANCO_ITENS_FIXOS,
     BalancoCorredor,
     BalancoMensal,
     CicloBalanco,
@@ -193,7 +194,7 @@ def recalcular_totais_balanco(balanco):
 
 def corredores_por_loja(lojas_ids):
     corredores = (
-        CorredorLoja.query.filter(CorredorLoja.loja_id.in_(lojas_ids))
+        CorredorLoja.query.filter(CorredorLoja.loja_id.in_(lojas_ids), CorredorLoja.ativo.is_(True))
         .order_by(CorredorLoja.loja_id, CorredorLoja.ordem, CorredorLoja.nome)
         .all()
     )
@@ -201,6 +202,21 @@ def corredores_por_loja(lojas_ids):
     for corredor in corredores:
         por_loja.setdefault(corredor.loja_id, []).append(corredor)
     return por_loja
+
+
+def corredor_fixo_balanco(corredor):
+    return corredor.nome in BALANCO_ITENS_FIXOS
+
+
+def total_itens_fixos_balanco(corredores, valores_por_corredor):
+    return sum(
+        (
+            valores_por_corredor[corredor.id].valor_considerado or Decimal("0.00")
+            for corredor in corredores
+            if corredor_fixo_balanco(corredor) and corredor.id in valores_por_corredor
+        ),
+        Decimal("0.00"),
+    )
 
 
 def get_loja_visivel(loja_id):
@@ -602,20 +618,27 @@ def balancos():
         diferenca_revisao = valor_revisado - valor_fechado if valor_revisado is not None else None
         valor_balanco = balanco.valor_considerado if balanco else Decimal("0.00")
         valor_anterior = balanco_anterior.valor_considerado if balanco_anterior else Decimal("0.00")
+        corredores = corredores_loja.get(loja.id, [])
+        corredores_fixos = [corredor for corredor in corredores if corredor_fixo_balanco(corredor)]
+        corredores_variaveis = [corredor for corredor in corredores if not corredor_fixo_balanco(corredor)]
         valores_por_corredor = {
             item.corredor_id: item
             for item in balanco.corredores
             if corredor_lancado(item)
         } if balanco else {}
-        corredores_lancados = sum(1 for corredor in corredores_loja.get(loja.id, []) if corredor.id in valores_por_corredor)
-        total_corredores = len(corredores_loja.get(loja.id, []))
+        total_itens_fixos = total_itens_fixos_balanco(corredores, valores_por_corredor)
+        corredores_lancados = sum(1 for corredor in corredores if corredor.id in valores_por_corredor)
+        total_corredores = len(corredores)
         resumo_lojas.append(
             {
                 "loja": loja,
-                "corredores": corredores_loja.get(loja.id, []),
+                "corredores": corredores,
+                "corredores_fixos": corredores_fixos,
+                "corredores_variaveis": corredores_variaveis,
                 "valores_por_corredor": valores_por_corredor,
                 "corredores_lancados": corredores_lancados,
                 "total_corredores": total_corredores,
+                "total_itens_fixos": total_itens_fixos,
                 "lancamento_completo": total_corredores > 0 and corredores_lancados == total_corredores,
                 "tem_corredor_pendente": total_corredores > corredores_lancados,
                 "balanco": balanco,
@@ -688,6 +711,13 @@ def atualizar_corredor_balanco(corredor_id):
     corredor = db.session.get(CorredorLoja, corredor_id)
     if not corredor:
         abort(404)
+    if corredor_fixo_balanco(corredor):
+        corredor.descricao = "Item fixo do balanço"
+        corredor.ativo = True
+        corredor.ordem = request.form.get("ordem", type=int) or corredor.ordem
+        db.session.commit()
+        flash("Item fixo atualizado. O nome não pode ser alterado.", "success")
+        return redirect(url_for("admin.lojas", corredor_loja_id=corredor.loja_id))
     corredor.nome = request.form.get("nome", "").strip() or corredor.nome
     corredor.descricao = request.form.get("descricao", "").strip()
     corredor.ordem = request.form.get("ordem", type=int) or 0
@@ -708,6 +738,12 @@ def excluir_corredor_balanco(corredor_id):
         abort(404)
 
     loja_id = corredor.loja_id
+    if corredor_fixo_balanco(corredor):
+        corredor.ativo = True
+        db.session.commit()
+        flash("Este item é fixo do balanço e não pode ser excluído.", "error")
+        return redirect(url_for("admin.lojas", corredor_loja_id=loja_id))
+
     if corredor.valores:
         corredor.ativo = False
         flash("Este corredor já tem lançamento. Ele foi inativado para manter o histórico.", "success")
