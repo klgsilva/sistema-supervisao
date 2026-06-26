@@ -1,4 +1,49 @@
 {% extends "base.html" %}
+{% macro linha_corredor(corredor, item) %}
+{% set valor = item.valores_por_corredor.get(corredor.id) %}
+{% set fechado = valor.valor_fechado if valor else 0 %}
+{% set revisado = valor.valor_revisado if valor and valor.valor_revisado is not none else none %}
+{% set corredor_lancado = valor is not none %}
+<tr>
+    <td data-label="Corredor">{{ corredor.nome }}{% if corredor.descricao %}<br><small>{{ corredor.descricao }}</small>{% endif %}</td>
+    <td data-label="Valor fechado">
+        {% if current_user.is_admin or corredor_lancado %}
+        {{ fechado|brl }}
+        {% if not current_user.is_admin and corredor_lancado %}
+        <br><small class="badge success">Já lançado</small>
+        {% endif %}
+        {% else %}
+        <input name="corredor_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money data-balance-value value="" placeholder="0,00">
+        {% endif %}
+    </td>
+    <td data-label="Observação">
+        {% if current_user.is_admin or corredor_lancado %}
+        {{ valor.observacao if valor and valor.observacao else "-" }}
+        {% else %}
+        <input name="observacao_corredor_{{ item.loja.id }}_{{ corredor.id }}" placeholder="Opcional">
+        {% endif %}
+    </td>
+    {% if current_user.is_admin %}
+    <td data-label="Valor revisado">
+        {% if corredor_lancado %}
+        <input name="revisao_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money value="{{ '%.2f'|format(revisado|float) if revisado is not none else '' }}" placeholder="0,00">
+        {% else %}
+        <span class="muted">Aguardando supervisor (a)</span>
+        {% endif %}
+    </td>
+    <td data-label="Obs. revisão">
+        {% if corredor_lancado %}
+        <input name="observacao_revisao_{{ item.loja.id }}_{{ corredor.id }}" value="{{ valor.observacao_revisao if valor and valor.observacao_revisao else '' }}" placeholder="Opcional">
+        {% else %}
+        -
+        {% endif %}
+    </td>
+    <td data-label="Diferença" class="{% if revisado is not none and revisado - fechado < 0 %}negative{% elif revisado is not none and revisado - fechado > 0 %}positive{% endif %}">
+        {{ ((revisado - fechado)|brl) if revisado is not none else "-" }}
+    </td>
+    {% endif %}
+</tr>
+{% endmacro %}
 {% block content %}
 <div class="page-head">
     <div>
@@ -143,7 +188,10 @@
                         <small class="badge warning">Pendente</small>
                         {% endif %}
                     </div>
-                    <strong data-store-total>{{ item.valor_balanco|brl }}</strong>
+                    <div class="balance-total-box">
+                        <small>Itens fixos: {{ item.total_itens_fixos|brl }}</small>
+                        <strong data-store-total>{{ item.valor_balanco|brl }}</strong>
+                    </div>
                 </div>
 
                 {% if not item.corredores %}
@@ -165,6 +213,16 @@
                         </thead>
                         <tbody>
                             {% for corredor in item.corredores %}
+                            {% if loop.first and item.corredores_fixos %}
+                            <tr class="table-section-row">
+                                <td colspan="{{ 6 if current_user.is_admin else 3 }}">Itens fixos do balanço</td>
+                            </tr>
+                            {% endif %}
+                            {% if item.corredores_variaveis and corredor.id == item.corredores_variaveis[0].id %}
+                            <tr class="table-section-row">
+                                <td colspan="{{ 6 if current_user.is_admin else 3 }}">Corredores da loja</td>
+                            </tr>
+                            {% endif %}
                             {% set valor = item.valores_por_corredor.get(corredor.id) %}
                             {% set fechado = valor.valor_fechado if valor else 0 %}
                             {% set revisado = valor.valor_revisado if valor and valor.valor_revisado is not none else none %}
