@@ -23,6 +23,12 @@ python run.py
 
 Acesse: `http://127.0.0.1:5000`
 
+## Manual de uso
+
+Para entender o que cada usuário deve fazer no sistema, consulte:
+
+[`MANUAL_USO.md`](MANUAL_USO.md)
+
 ## Dados iniciais
 
 | Perfil | E-mail | Senha |
