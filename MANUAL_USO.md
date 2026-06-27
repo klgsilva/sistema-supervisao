@@ -20,6 +20,19 @@ O sistema possui dois perfis principais:
 5. Se marcar NOK, o sistema cria ocorrência automaticamente.
 6. O admin acompanha visitas, ocorrências, manutenções, balanços e relatórios.
 
+## Menu lateral
+
+O sistema usa um menu lateral organizado por grupos:
+
+- **Operação**: Painel, Nova visita, Ocorrências e Manutenções.
+- **Gestão**: Balanços, Relatórios e Financeiro.
+- **Cadastros**: Lojas, Supervisores, Vínculos e Checklist.
+- **Suporte**: Ajuda e Sair.
+
+No computador, o menu pode ser recolhido para mostrar apenas ícones.
+
+No celular, o botão de menu abre a gaveta lateral. Ao tocar fora ou escolher uma opção, o menu fecha.
+
 ## O que o admin deve fazer
 
 ### 1. Cadastrar lojas
@@ -117,6 +130,18 @@ O admin pode verificar:
 - descrição;
 - foto, quando houver;
 - status.
+
+### 8. Financeiro
+
+Menu: **Financeiro**
+
+O módulo Financeiro já está disponível no menu, mas ainda está reservado para atualização futura.
+
+Ao acessar, o sistema mostra:
+
+**Parte financeira em atualização. Aguarde novas atualizações.**
+
+Esse módulo poderá ser usado futuramente para controle de limites por loja, gastos urgentes, aprovações e relatórios financeiros.
 
 Status possíveis:
 
