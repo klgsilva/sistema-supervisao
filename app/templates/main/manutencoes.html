@@ -43,6 +43,44 @@
 </section>
 
 {% if loja_id %}
+{% set alertas_loja = manutencoes_alerta_por_loja.get(loja_id, []) %}
+{% if alertas_loja %}
+<section class="pending-alert">
+    <h2>Manutenções abertas desta loja</h2>
+    <p>Verifique se as pendências anteriores foram resolvidas antes de registrar uma nova manutenção.</p>
+    {% for item in alertas_loja %}
+    <div class="pending-item maintenance-pending-item">
+        <div>
+            <strong>{{ item.area_equipamento }}</strong>
+            <small>
+                {{ item.data_solicitacao.strftime("%d/%m/%Y") }} ·
+                {% if item.categoria == "refrigeracao" %}Refrigeração / Câmara{% else %}Manutenção padrão{% endif %} ·
+                {{ item.status.replace("_", " ") }}
+            </small>
+            <small>{{ item.problema }}</small>
+            {% if item.observacao %}<small>Obs: {{ item.observacao }}</small>{% endif %}
+        </div>
+        {% if item.foto_path %}
+        <a href="{{ url_for('static', filename=item.foto_path) }}" target="_blank">Ver foto</a>
+        {% endif %}
+        <form method="post" action="{{ url_for('main.atualizar_status_manutencao', manutencao_id=item.id) }}" class="status-form">
+            <input type="hidden" name="origem" value="alerta">
+            <select name="status">
+                <option value="pendente" {% if item.status == "pendente" %}selected{% endif %}>Ainda pendente</option>
+                <option value="em_andamento" {% if item.status == "em_andamento" %}selected{% endif %}>Em andamento</option>
+                <option value="concluido">Concluído</option>
+                <option value="cancelado">Cancelado</option>
+            </select>
+            <input type="date" name="data_atendimento" value="{{ item.data_atendimento.isoformat() if item.data_atendimento else '' }}">
+            <input name="custo" inputmode="decimal" data-money value="{{ '%.2f'|format(item.custo|float) }}" placeholder="0,00">
+            <input name="observacao" value="{{ item.observacao or '' }}" placeholder="Observação">
+            <button type="submit">Salvar</button>
+        </form>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
 <section>
     <h2>Nova manutenção{% if loja_selecionada %} - {{ loja_selecionada.nome }}{% endif %}</h2>
     <form method="post" action="{{ url_for('main.criar_manutencao') }}" class="form-card" enctype="multipart/form-data">
