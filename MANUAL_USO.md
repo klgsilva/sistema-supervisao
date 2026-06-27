@@ -245,6 +245,15 @@ Quando marcar **OK**:
 - a foto aparece no detalhe da visita;
 - não cria ocorrência.
 
+### Avarias
+
+O item de avarias funciona de forma diferente dos demais:
+
+- marque **Não** quando não existirem avarias na loja;
+- marque **Sim** quando existirem avarias;
+- ao marcar **Sim**, o sistema exige informar quais produtos estão avariados;
+- ao marcar **Sim**, o sistema cria uma ocorrência aberta automaticamente.
+
 Itens de reunião não pedem foto, pois são apenas perguntas e registro de assunto.
 
 ### 4. Anexar foto
@@ -289,23 +298,34 @@ Categorias:
 
 Após salvar, a tela volta ao estado inicial para evitar lançamento duplicado.
 
+Se existir manutenção **pendente** ou **em andamento** de dias anteriores, o sistema mostra um alerta ao escolher a loja. O supervisor (a) deve verificar se foi resolvida e atualizar o status quando necessário.
+
 ### 7. Lançar balanço por corredores
 
 Menu: **Balanços**
 
-O supervisor (a) escolhe a loja e informa os valores por corredor/setor.
+O supervisor (a) escolhe a loja e informa os valores por itens fixos e por corredor/setor.
+
+Itens fixos do balanço:
+
+- Avarias/Loja;
+- Remanejamento;
+- Descartes;
+- Uso e consumo.
 
 Regras:
 
 - cada corredor lançado fica bloqueado;
-- corredor sem valor continua disponível para lançamento posterior;
-- valor `0,00` não conta como lançado;
+- campo em branco continua disponível para lançamento posterior;
+- valor `0,00` conta como lançado e significa que não houve valor naquele item;
 - quando todos os corredores forem lançados, a loja fica bloqueada;
 - supervisor (a) não edita valor já lançado.
 
 Exemplo:
 
 Se a loja tem 5 corredores e o supervisor (a) lança apenas 3, os 3 ficam bloqueados e os outros 2 continuam abertos.
+
+Se no mês não houve Remanejamento, informe `0,00`. Se deixar em branco, o sistema entende que aquele item ainda será lançado depois.
 
 ## Relatórios disponíveis
 
@@ -359,6 +379,7 @@ Mostra por loja:
 - Cada loja só pode ter uma visita por dia por supervisor (a).
 - Checklist NOK exige comentário.
 - Checklist NOK cria ocorrência automaticamente.
+- Avarias marcadas como Sim exigem informar quais produtos estão avariados.
 - Ocorrência pode ser resolvida ou cancelada depois.
 - Foto OK é evidência, não ocorrência.
 - Foto NOK fica ligada à ocorrência.
