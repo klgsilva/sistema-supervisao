@@ -58,17 +58,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const toggle = document.querySelector("[data-menu-toggle]");
     const menu = document.querySelector("[data-menu]");
+    const menuBackdrop = document.querySelector("[data-menu-backdrop]");
+    const appShell = document.querySelector("[data-app-shell]");
+    const sidebarCollapse = document.querySelector("[data-sidebar-collapse]");
+    const sidebarCollapsedKey = "supervisao:sidebar-collapsed";
+    if (appShell && localStorage.getItem(sidebarCollapsedKey) === "1") {
+        appShell.classList.add("sidebar-collapsed");
+    }
+    if (sidebarCollapse && appShell) {
+        sidebarCollapse.addEventListener("click", (event) => {
+            event.stopPropagation();
+            appShell.classList.toggle("sidebar-collapsed");
+            localStorage.setItem(sidebarCollapsedKey, appShell.classList.contains("sidebar-collapsed") ? "1" : "0");
+        });
+    }
     if (toggle && menu) {
+        const closeMenu = () => {
+            menu.classList.remove("open");
+            if (menuBackdrop) {
+                menuBackdrop.classList.remove("open");
+            }
+        };
+        const openMenu = () => {
+            menu.classList.add("open");
+            if (menuBackdrop) {
+                menuBackdrop.classList.add("open");
+            }
+        };
         toggle.addEventListener("click", (event) => {
             event.stopPropagation();
-            menu.classList.toggle("open");
+            if (menu.classList.contains("open")) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
             toggle.blur();
         });
         menu.querySelectorAll("a").forEach((link) => {
-            link.addEventListener("click", () => menu.classList.remove("open"));
+            link.addEventListener("click", closeMenu);
         });
         menu.addEventListener("click", (event) => event.stopPropagation());
-        document.addEventListener("click", () => menu.classList.remove("open"));
+        if (menuBackdrop) {
+            menuBackdrop.addEventListener("click", closeMenu);
+        }
+        document.addEventListener("click", closeMenu);
     }
 
     const lojaSelect = document.querySelector("[data-loja-select]");
