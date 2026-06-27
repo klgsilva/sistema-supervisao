@@ -69,10 +69,31 @@
             <div class="check-section">
                 <h3>{{ setor }}</h3>
                 {% for item in grupo %}
-                <fieldset class="check-item">
+                <fieldset class="check-item{% if item_avaria_detalhe(item) %} hidden{% endif %}" {% if item_avaria_detalhe(item) %}data-avaria-detail="avarias"{% endif %}>
                     <legend>{{ item.descricao }}</legend>
-                    {% if item_texto_livre(item) %}
+                    {% if item_avaria_detalhe(item) %}
+                    <textarea name="comentario_{{ item.id }}" rows="2" placeholder="Informe quais produtos estão avariados" data-avaria-comment></textarea>
+                    {% elif item_texto_livre(item) %}
                     <textarea name="comentario_{{ item.id }}" rows="2" placeholder="Digite aqui"></textarea>
+                    {% elif item_avaria_pergunta(item) %}
+                    <div class="segmented">
+                        <label><input type="radio" name="status_{{ item.id }}" value="OK" checked data-status data-avaria-trigger="avarias"> Não</label>
+                        <label><input type="radio" name="status_{{ item.id }}" value="NOK" data-status data-avaria-trigger="avarias"> Sim</label>
+                    </div>
+                    <div class="evidence-photo">
+                        <span data-photo-label>Foto OK (opcional)</span>
+                        <div class="photo-actions">
+                            <label>
+                                Tirar foto
+                                <input type="file" name="foto_camera_{{ item.id }}" accept="image/*" capture="environment">
+                            </label>
+                            <label>
+                                Galeria
+                                <input type="file" name="foto_galeria_{{ item.id }}" accept="image/*">
+                            </label>
+                        </div>
+                        <small class="photo-status" data-photo-status>Nenhuma foto adicionada</small>
+                    </div>
                     {% else %}
                     <div class="segmented">
                         <label><input type="radio" name="status_{{ item.id }}" value="OK" checked data-status> OK</label>
