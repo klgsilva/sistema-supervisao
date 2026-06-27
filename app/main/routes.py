@@ -179,7 +179,7 @@ def balanco_lancado(balanco):
 
 
 def corredor_lancado(item):
-    return bool(item and (item.valor_fechado or Decimal("0.00")) > Decimal("0.00"))
+    return item is not None
 
 
 def recalcular_totais_balanco(balanco):
@@ -331,6 +331,18 @@ def manutencoes():
     abertas = abertas_query.count()
     refrigeracao_abertas = abertas_query.filter(Manutencao.categoria == "refrigeracao").count()
     padrao_abertas = abertas_query.filter(Manutencao.categoria == "padrao").count()
+    manutencoes_alerta = (
+        Manutencao.query.filter(
+            Manutencao.loja_id.in_(lojas_ids),
+            Manutencao.status.in_(["pendente", "em_andamento"]),
+            Manutencao.data_solicitacao < date.today(),
+        )
+        .order_by(Manutencao.data_solicitacao.asc(), Manutencao.id.asc())
+        .all()
+    )
+    manutencoes_alerta_por_loja = {}
+    for manutencao in manutencoes_alerta:
+        manutencoes_alerta_por_loja.setdefault(manutencao.loja_id, []).append(manutencao)
 
     return render_template(
         "main/manutencoes.html",
@@ -348,6 +360,7 @@ def manutencoes():
         refrigeracao_abertas=refrigeracao_abertas,
         padrao_abertas=padrao_abertas,
         total_custo=total_custo,
+        manutencoes_alerta_por_loja=manutencoes_alerta_por_loja,
     )
 
 
@@ -456,6 +469,8 @@ def atualizar_status_manutencao(manutencao_id):
         manutencao.observacao = observacao
     db.session.commit()
     flash("Status da manutenção atualizado.", "success")
+    if request.form.get("origem") == "alerta":
+        return redirect(url_for("main.manutencoes", loja_id=manutencao.loja_id))
     return redirect(url_for("main.manutencoes", historico_loja_id=manutencao.loja_id, _anchor="historico"))
 
 
@@ -823,15 +838,16 @@ def salvar_balancos():
                     continue
                 valor_raw = request.form.get(f"corredor_{loja_id}_{corredor.id}", "").strip()
                 observacao = request.form.get(f"observacao_corredor_{loja_id}_{corredor.id}", "").strip()
-                if not valor_raw and not observacao:
+                if not valor_raw:
                     continue
                 try:
-                    valor = parse_reais(valor_raw) if valor_raw else Decimal("0.00")
+                    valor = parse_reais(valor_raw)
                 except ValueError as exc:
                     flash(str(exc), "error")
                     return redirect(url_for("main.balancos", ciclo_id=ciclo.id))
-                if valor <= Decimal("0.00"):
-                    continue
+                if valor < Decimal("0.00"):
+                    flash("O valor do balanço não pode ser negativo.", "error")
+                    return redirect(url_for("main.balancos", ciclo_id=ciclo.id))
                 valores.append((corredor, valor, observacao, item_existente))
 
             if not valores:
