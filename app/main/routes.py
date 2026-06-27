@@ -287,6 +287,12 @@ def manual():
     return render_template("main/manual.html")
 
 
+@bp.route("/financeiro")
+@login_required
+def financeiro():
+    return render_template("main/financeiro.html")
+
+
 @bp.route("/manutencoes")
 @login_required
 def manutencoes():
