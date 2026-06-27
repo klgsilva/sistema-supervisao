@@ -14,11 +14,16 @@
     box-sizing: border-box;
 }
 
+html {
+    min-height: 100%;
+}
+
 body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
     font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
 }
 
 a {
@@ -133,6 +138,22 @@ p {
 
 body:has(.login-box) {
     background: linear-gradient(135deg, #0d2a78 0%, #143fa3 55%, #0b1b44 100%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+body:has(.login-box) .container {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    max-width: none;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+body:has(.login-box) .auth-box {
+    margin: 0 auto;
 }
 
 .login-box {
@@ -580,6 +601,20 @@ th {
     margin-top: 4px;
 }
 
+.maintenance-pending-item {
+    grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.maintenance-pending-item .status-form {
+    align-items: stretch;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
+}
+
+.maintenance-pending-item .status-form input {
+    min-width: 150px;
+}
+
 .check-item legend {
     color: var(--text);
     font-weight: 700;
@@ -831,6 +866,17 @@ th {
         align-items: flex-start;
         flex-direction: column;
         gap: 4px;
+    }
+
+    .maintenance-pending-item {
+        grid-template-columns: 1fr;
+    }
+
+    .maintenance-pending-item .status-form,
+    .maintenance-pending-item .status-form input,
+    .maintenance-pending-item .status-form select,
+    .maintenance-pending-item .status-form button {
+        width: 100%;
     }
 
     .table-wrap {
