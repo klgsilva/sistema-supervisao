@@ -1,3 +1,34 @@
+{% macro nav_icon(name) -%}
+<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+    {% if name == "painel" %}
+    <path d="M4 11.5 12 5l8 6.5"></path><path d="M6.5 10.5V19h11v-8.5"></path><path d="M10 19v-5h4v5"></path>
+    {% elif name == "visita" %}
+    <path d="M8 4h8"></path><path d="M9 3.5h6v3H9z"></path><path d="M6 5.5h12V20H6z"></path><path d="m9 13 2 2 4-5"></path>
+    {% elif name == "ocorrencias" %}
+    <path d="M12 4 3 20h18z"></path><path d="M12 9v5"></path><path d="M12 17h.01"></path>
+    {% elif name == "manutencoes" %}
+    <path d="M14 7a4 4 0 0 0 5 5l-7 7a2.5 2.5 0 0 1-3.5-3.5l7-7Z"></path><path d="m5 5 4 4"></path>
+    {% elif name == "balancos" %}
+    <path d="M7 3h10v18H7z"></path><path d="M10 7h4"></path><path d="M10 11h.01"></path><path d="M14 11h.01"></path><path d="M10 15h.01"></path><path d="M14 15h.01"></path>
+    {% elif name == "relatorios" %}
+    <path d="M5 19V5"></path><path d="M5 19h14"></path><path d="M9 16v-5"></path><path d="M13 16V8"></path><path d="M17 16v-3"></path>
+    {% elif name == "financeiro" %}
+    <path d="M12 4v16"></path><path d="M16 7.5c-.8-1-2.1-1.5-4-1.5-2.2 0-3.5 1-3.5 2.5S10 11 12 11s3.5.7 3.5 2.5S14.2 16 12 16c-1.9 0-3.3-.6-4.1-1.7"></path>
+    {% elif name == "lojas" %}
+    <path d="M4 10h16"></path><path d="m5 10 1.5-5h11L19 10"></path><path d="M6 10v10h12V10"></path><path d="M10 20v-5h4v5"></path>
+    {% elif name == "supervisores" %}
+    <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path><path d="M3.5 20c.6-3.4 2.4-5 5.5-5s4.9 1.6 5.5 5"></path><path d="M16 11a2.5 2.5 0 0 0 0-5"></path><path d="M17 15c2 .3 3.2 1.9 3.5 5"></path>
+    {% elif name == "vinculos" %}
+    <path d="M9.5 14.5 14.5 9.5"></path><path d="M8 10H6a4 4 0 0 0 0 8h4"></path><path d="M14 6h4a4 4 0 0 1 0 8h-2"></path>
+    {% elif name == "checklist" %}
+    <path d="M7 5h10"></path><path d="M7 12h10"></path><path d="M7 19h10"></path><path d="m3.5 5 .8.8L6 4"></path><path d="m3.5 12 .8.8L6 11"></path><path d="m3.5 19 .8.8L6 18"></path>
+    {% elif name == "ajuda" %}
+    <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"></path><path d="M9.8 9a2.3 2.3 0 0 1 4.4 1c0 1.7-2.2 1.8-2.2 3.4"></path><path d="M12 17h.01"></path>
+    {% elif name == "sair" %}
+    <path d="M10 5H5v14h5"></path><path d="M14 8l4 4-4 4"></path><path d="M8 12h10"></path>
+    {% endif %}
+</svg>
+{%- endmacro %}
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -8,41 +39,58 @@
 </head>
 <body>
     {% if current_user.is_authenticated %}
-    <header class="topbar">
-        <a class="brand" href="{{ url_for('main.dashboard') }}">
-            <span class="brand-greeting">Olá,</span>
-            <span>{{ current_user.nome }}</span>
-        </a>
-        <button class="menu-toggle" type="button" data-menu-toggle aria-label="Abrir menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <nav class="nav" data-menu>
-            <a href="{{ url_for('main.dashboard') }}">Painel</a>
-            <a href="{{ url_for('main.relatorios') }}">Relatórios</a>
-            <a href="{{ url_for('main.balancos') }}">Balanços</a>
-            <a href="{{ url_for('main.manutencoes') }}">Manutenções</a>
-            {% if not current_user.is_admin %}
-            <a href="{{ url_for('visitas.nova') }}">Nova visita</a>
-            {% endif %}
-            <a href="{{ url_for('visitas.ocorrencias') }}">Ocorrências</a>
-            {% if current_user.is_admin %}
-            <a href="{{ url_for('admin.lojas') }}">Lojas</a>
-            <a href="{{ url_for('admin.supervisores') }}">Supervisores</a>
-            <a href="{{ url_for('admin.vinculos') }}">Vínculos</a>
-            <a href="{{ url_for('admin.checklist') }}">Checklist</a>
-            {% endif %}
-            <a href="{{ url_for('auth.logout') }}">Sair</a>
-        </nav>
-    </header>
-    <a class="help-float" href="{{ url_for('main.manual') }}" aria-label="Abrir manual de ajuda">
-        <span>?</span>
-        <strong>Ajuda</strong>
-    </a>
-    {% endif %}
+    <button class="menu-toggle" type="button" data-menu-toggle aria-label="Abrir menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+    <div class="menu-backdrop" data-menu-backdrop></div>
+    <div class="app-shell" data-app-shell>
+        <aside class="sidebar" data-menu>
+            <button class="sidebar-collapse" type="button" data-sidebar-collapse aria-label="Recolher menu">&#8249;</button>
+            <a class="brand sidebar-brand" href="{{ url_for('main.dashboard') }}">
+                <span class="brand-greeting">Olá,</span>
+                <span>{{ current_user.nome }}</span>
+            </a>
+            <nav class="nav">
+                <div class="nav-group">
+                    <span>Operação</span>
+                    <a class="{% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}" title="Painel">{{ nav_icon("painel") }}<span class="nav-text">Painel</span></a>
+                    {% if not current_user.is_admin %}
+                    <a class="{% if request.endpoint == 'visitas.nova' %}active{% endif %}" href="{{ url_for('visitas.nova') }}" title="Nova visita">{{ nav_icon("visita") }}<span class="nav-text">Nova visita</span></a>
+                    {% endif %}
+                    <a class="{% if request.endpoint == 'visitas.ocorrencias' %}active{% endif %}" href="{{ url_for('visitas.ocorrencias') }}" title="Ocorrências">{{ nav_icon("ocorrencias") }}<span class="nav-text">Ocorrências</span></a>
+                    <a class="{% if request.endpoint == 'main.manutencoes' %}active{% endif %}" href="{{ url_for('main.manutencoes') }}" title="Manutenções">{{ nav_icon("manutencoes") }}<span class="nav-text">Manutenções</span></a>
+                </div>
 
-    <main class="container">
+                <div class="nav-group">
+                    <span>Gestão</span>
+                    <a class="{% if request.endpoint == 'main.balancos' %}active{% endif %}" href="{{ url_for('main.balancos') }}" title="Balanços">{{ nav_icon("balancos") }}<span class="nav-text">Balanços</span></a>
+                    <a class="{% if request.endpoint == 'main.relatorios' %}active{% endif %}" href="{{ url_for('main.relatorios') }}" title="Relatórios">{{ nav_icon("relatorios") }}<span class="nav-text">Relatórios</span></a>
+                    <a class="{% if request.endpoint == 'main.financeiro' %}active{% endif %}" href="{{ url_for('main.financeiro') }}" title="Financeiro">{{ nav_icon("financeiro") }}<span class="nav-text">Financeiro</span></a>
+                </div>
+
+                {% if current_user.is_admin %}
+                <div class="nav-group">
+                    <span>Cadastros</span>
+                    <a class="{% if request.endpoint == 'admin.lojas' %}active{% endif %}" href="{{ url_for('admin.lojas') }}" title="Lojas">{{ nav_icon("lojas") }}<span class="nav-text">Lojas</span></a>
+                    <a class="{% if request.endpoint == 'admin.supervisores' %}active{% endif %}" href="{{ url_for('admin.supervisores') }}" title="Supervisores">{{ nav_icon("supervisores") }}<span class="nav-text">Supervisores</span></a>
+                    <a class="{% if request.endpoint == 'admin.vinculos' %}active{% endif %}" href="{{ url_for('admin.vinculos') }}" title="Vínculos">{{ nav_icon("vinculos") }}<span class="nav-text">Vínculos</span></a>
+                    <a class="{% if request.endpoint == 'admin.checklist' %}active{% endif %}" href="{{ url_for('admin.checklist') }}" title="Checklist">{{ nav_icon("checklist") }}<span class="nav-text">Checklist</span></a>
+                </div>
+                {% endif %}
+
+                <div class="nav-group">
+                    <span>Suporte</span>
+                    <a class="{% if request.endpoint == 'main.manual' %}active{% endif %}" href="{{ url_for('main.manual') }}" title="Ajuda">{{ nav_icon("ajuda") }}<span class="nav-text">Ajuda</span></a>
+                    <a href="{{ url_for('auth.logout') }}" title="Sair">{{ nav_icon("sair") }}<span class="nav-text">Sair</span></a>
+                </div>
+            </nav>
+        </aside>
+        <main class="container">
+    {% else %}
+        <main class="container">
+    {% endif %}
         {% with mensagens = get_flashed_messages(with_categories=true) %}
             {% if mensagens %}
             <div class="messages">
@@ -54,7 +102,10 @@
         {% endwith %}
 
         {% block content %}{% endblock %}
-    </main>
+        </main>
+    {% if current_user.is_authenticated %}
+    </div>
+    {% endif %}
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
