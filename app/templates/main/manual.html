@@ -46,6 +46,7 @@
             <li><strong>Nova visita:</strong> escolher uma loja pendente do dia e registrar a visita.</li>
             <li><strong>Venda:</strong> informar a venda do dia anterior no formato em reais.</li>
             <li><strong>Checklist:</strong> marcar OK quando estiver padrão e NOK quando estiver fora do padrão.</li>
+            <li><strong>Avarias:</strong> responder Não quando não houver avarias; se marcar Sim, informar quais produtos estão avariados.</li>
             <li><strong>NOK:</strong> comentário é obrigatório e gera ocorrência automaticamente.</li>
             <li><strong>Foto OK:</strong> pode ser usada como evidência, mas não cria ocorrência.</li>
             <li><strong>Manutenções:</strong> registrar problema, categoria, status, custo e foto opcional.</li>
@@ -70,6 +71,10 @@
             <p>Alguns itens têm apenas campo de texto, como assuntos tratados em reuniões.</p>
         </div>
         <div class="manual-card">
+            <strong>Avarias</strong>
+            <p>Funciona como Sim/Não. Se marcar Sim, o sistema exige a descrição dos produtos avariados e cria ocorrência.</p>
+        </div>
+        <div class="manual-card">
             <strong>Fotos</strong>
             <p>Use Tirar foto para abrir a câmera ou Galeria para escolher uma imagem salva.</p>
         </div>
@@ -84,6 +89,7 @@
         <li>Use <strong>Refrigeração / Câmara fria</strong> para equipamentos terceirizados e controle semanal.</li>
         <li>Use <strong>Manutenção padrão</strong> para elétrica, computadores, estrutura e itens internos.</li>
         <li>O campo custo serve para registrar gasto com material ou serviço.</li>
+        <li>Manutenção pendente ou em andamento de dias anteriores aparece como alerta ao escolher a loja.</li>
     </ul>
 </section>
 
@@ -91,10 +97,11 @@
     <h2>Balanços</h2>
     <ul class="manual-list">
         <li>Admin libera o balanço informando competência e data da contagem.</li>
-        <li>Supervisor (a) lança os valores por corredor/setor da loja.</li>
+        <li>Supervisor (a) lança os valores por itens fixos e por corredor/setor da loja.</li>
+        <li>Itens fixos do balanço: Avarias/Loja, Remanejamento, Descartes e Uso e consumo.</li>
         <li>Corredor lançado fica bloqueado e não pode ser editado pelo supervisor (a).</li>
-        <li>Corredor sem valor continua disponível para lançamento posterior.</li>
-        <li>Valor 0,00 não conta como lançamento.</li>
+        <li>Campo em branco continua disponível para lançamento posterior.</li>
+        <li>Valor 0,00 conta como lançamento e significa que não houve valor naquele item.</li>
         <li>Admin pode lançar valor revisado quando houver correção da central.</li>
     </ul>
 </section>
@@ -118,6 +125,7 @@
         <li>Cada loja permite uma visita por dia por supervisor (a).</li>
         <li>No dia seguinte, a lista de visitas pendentes reinicia normalmente.</li>
         <li>Checklist NOK exige comentário e cria ocorrência.</li>
+        <li>Avarias marcadas como Sim exigem informar quais produtos estão avariados.</li>
         <li>Balanço só aceita lançamento quando está aberto.</li>
     </ul>
 </section>
