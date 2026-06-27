@@ -20,6 +20,8 @@ ITENS_TEXTO_LIVRE = (
     "Informar quais produtos estão próximos do vencimento",
     "Informar os assuntos tratados nas reuniões",
 )
+AVARIA_PERGUNTA_PREFIXO = "verificar se existem avarias"
+AVARIA_DETALHE_TERMOS = ("informar", "produtos", "avariados")
 
 
 def parse_reais(valor):
@@ -50,6 +52,15 @@ def salvar_foto_ocorrencia(arquivo):
 
 def item_texto_livre(item):
     return any(item.descricao.startswith(prefixo) for prefixo in ITENS_TEXTO_LIVRE)
+
+
+def item_avaria_pergunta(item):
+    return item.setor == "Avarias" and item.descricao.lower().startswith(AVARIA_PERGUNTA_PREFIXO)
+
+
+def item_avaria_detalhe(item):
+    descricao = item.descricao.lower()
+    return item.setor == "Avarias" and all(termo in descricao for termo in AVARIA_DETALHE_TERMOS)
 
 
 def item_permite_foto(item):
@@ -149,12 +160,31 @@ def nova():
         ).first()
         if visita_existente:
             flash("Esta loja já possui visita hoje para este supervisor.", "error")
-            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre)
+            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre, item_avaria_pergunta=item_avaria_pergunta, item_avaria_detalhe=item_avaria_detalhe)
 
         erros = []
         respostas = []
+        item_detalhe_avarias = next((item for item in itens if item_avaria_detalhe(item)), None)
         for item in itens:
             comentario = request.form.get(f"comentario_{item.id}", "").strip()
+            if item_avaria_detalhe(item):
+                continue
+            if item_avaria_pergunta(item):
+                status = request.form.get(f"status_{item.id}")
+                comentario_avarias = (
+                    request.form.get(f"comentario_{item_detalhe_avarias.id}", "").strip()
+                    if item_detalhe_avarias
+                    else comentario
+                )
+                if status not in {"OK", "NOK"}:
+                    erros.append(f"Responda o item: {item.descricao}")
+                if status == "NOK" and not comentario_avarias:
+                    erros.append("Informe quais produtos estão avariados.")
+                foto = arquivo_foto_item(item.id) if item_permite_foto(item) else None
+                respostas.append((item, status, comentario_avarias if status == "NOK" else "", foto))
+                if item_detalhe_avarias:
+                    respostas.append((item_detalhe_avarias, "INFO", comentario_avarias, None))
+                continue
             if item_texto_livre(item):
                 respostas.append((item, "INFO", comentario, None))
                 continue
@@ -176,7 +206,7 @@ def nova():
             db.session.rollback()
             for erro in erros:
                 flash(erro, "error")
-            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre)
+            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre, item_avaria_pergunta=item_avaria_pergunta, item_avaria_detalhe=item_avaria_detalhe)
 
         visita = Visita(
             loja_id=loja_id,
@@ -201,7 +231,7 @@ def nova():
             db.session.rollback()
             for erro in erros:
                 flash(erro, "error")
-            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre)
+            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre, item_avaria_pergunta=item_avaria_pergunta, item_avaria_detalhe=item_avaria_detalhe)
 
         for item, status, comentario, foto in respostas:
             resposta = RespostaChecklist(
@@ -240,12 +270,12 @@ def nova():
         except IntegrityError:
             db.session.rollback()
             flash("Esta loja já possui visita hoje para este supervisor.", "error")
-            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre)
+            return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre, item_avaria_pergunta=item_avaria_pergunta, item_avaria_detalhe=item_avaria_detalhe)
 
         flash("Visita registrada com sucesso.", "success")
         return redirect(url_for("visitas.detalhe", visita_id=visita.id))
 
-    return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre)
+    return render_template("visitas/form.html", lojas=lojas, itens=itens, ocorrencias_ativas=ocorrencias_ativas, item_texto_livre=item_texto_livre, item_avaria_pergunta=item_avaria_pergunta, item_avaria_detalhe=item_avaria_detalhe)
 
 
 @bp.route("/<int:visita_id>")
