@@ -8,12 +8,12 @@
     <td data-label="Corredor">{{ corredor.nome }}{% if corredor.descricao %}<br><small>{{ corredor.descricao }}</small>{% endif %}</td>
     <td data-label="Valor fechado">
         {% if current_user.is_admin or corredor_lancado %}
-        {{ fechado|brl }}
+        <span data-balance-saved {% if corredor in item.corredores_fixos %}data-balance-fixed{% endif %} data-value="{{ fechado }}">{{ fechado|brl }}</span>
         {% if not current_user.is_admin and corredor_lancado %}
         <br><small class="badge success">Já lançado</small>
         {% endif %}
         {% else %}
-        <input name="corredor_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money data-balance-value value="" placeholder="0,00">
+        <input name="corredor_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money data-balance-value {% if corredor in item.corredores_fixos %}data-balance-fixed{% endif %} value="" placeholder="0,00">
         {% endif %}
     </td>
     <td data-label="Observação">
@@ -189,7 +189,7 @@
                         {% endif %}
                     </div>
                     <div class="balance-total-box">
-                        <small>Itens fixos: {{ item.total_itens_fixos|brl }}</small>
+                        <small>Itens fixos: <span data-fixed-total>{{ item.total_itens_fixos|brl }}</span></small>
                         <strong data-store-total>{{ item.valor_balanco|brl }}</strong>
                     </div>
                 </div>
@@ -231,12 +231,12 @@
                                 <td data-label="Corredor">{{ corredor.nome }}{% if corredor.descricao %}<br><small>{{ corredor.descricao }}</small>{% endif %}</td>
                                 <td data-label="Valor fechado">
                                     {% if current_user.is_admin or corredor_lancado %}
-                                    {{ fechado|brl }}
+                                    <span data-balance-saved {% if corredor in item.corredores_fixos %}data-balance-fixed{% endif %} data-value="{{ fechado }}">{{ fechado|brl }}</span>
                                     {% if not current_user.is_admin and corredor_lancado %}
                                     <br><small class="badge success">Já lançado</small>
                                     {% endif %}
                                     {% else %}
-                                    <input name="corredor_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money data-balance-value value="" placeholder="0,00">
+                                    <input name="corredor_{{ item.loja.id }}_{{ corredor.id }}" inputmode="decimal" data-money data-balance-value {% if corredor in item.corredores_fixos %}data-balance-fixed{% endif %} value="" placeholder="0,00">
                                     {% endif %}
                                 </td>
                                 <td data-label="Observação">
