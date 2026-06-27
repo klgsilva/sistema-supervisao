@@ -164,6 +164,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return Number.isNaN(parsed) ? 0 : parsed;
     };
 
+    const parseSavedMoneyValue = (value) => {
+        const parsed = Number(String(value || "0").replace(",", "."));
+        return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
     const formatMoneyValue = (value) => value.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -171,11 +176,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll("[data-balance-store]").forEach((store) => {
         const total = store.querySelector("[data-store-total]");
+        const fixedTotal = store.querySelector("[data-fixed-total]");
         const inputs = store.querySelectorAll("[data-balance-value]");
+        const savedValues = store.querySelectorAll("[data-balance-saved]");
         const refreshTotal = () => {
-            const sum = Array.from(inputs).reduce((acc, input) => acc + parseMoneyValue(input.value), 0);
+            const inputSum = Array.from(inputs).reduce((acc, input) => acc + parseMoneyValue(input.value), 0);
+            const savedSum = Array.from(savedValues).reduce((acc, item) => acc + parseSavedMoneyValue(item.dataset.value), 0);
+            const fixedInputSum = Array.from(inputs)
+                .filter((input) => input.hasAttribute("data-balance-fixed"))
+                .reduce((acc, input) => acc + parseMoneyValue(input.value), 0);
+            const fixedSavedSum = Array.from(savedValues)
+                .filter((item) => item.hasAttribute("data-balance-fixed"))
+                .reduce((acc, item) => acc + parseSavedMoneyValue(item.dataset.value), 0);
             if (total) {
-                total.textContent = formatMoneyValue(sum);
+                total.textContent = formatMoneyValue(inputSum + savedSum);
+            }
+            if (fixedTotal) {
+                fixedTotal.textContent = formatMoneyValue(fixedInputSum + fixedSavedSum);
             }
         };
         inputs.forEach((input) => input.addEventListener("input", refreshTotal));
@@ -192,7 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const refresh = () => {
             const selected = item.querySelector("[data-status]:checked");
             const isNok = selected && selected.value === "NOK";
-            comment.required = isNok;
+            if (comment) {
+                comment.required = isNok;
+            }
             if (nokExtra) {
                 nokExtra.classList.toggle("hidden", !isNok);
             }
@@ -202,5 +221,26 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         radios.forEach((radio) => radio.addEventListener("change", refresh));
         refresh();
+    });
+
+    document.querySelectorAll("[data-avaria-trigger]").forEach((radio) => {
+        const refreshAvariaDetail = () => {
+            const group = radio.dataset.avariaTrigger;
+            const selected = document.querySelector(`[data-avaria-trigger="${group}"]:checked`);
+            const detail = document.querySelector(`[data-avaria-detail="${group}"]`);
+            const comment = detail ? detail.querySelector("[data-avaria-comment]") : null;
+            const shouldShow = selected && selected.value === "NOK";
+            if (detail) {
+                detail.classList.toggle("hidden", !shouldShow);
+            }
+            if (comment) {
+                comment.required = shouldShow;
+                if (!shouldShow) {
+                    comment.value = "";
+                }
+            }
+        };
+        radio.addEventListener("change", refreshAvariaDetail);
+        refreshAvariaDetail();
     });
 });
