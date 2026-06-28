@@ -56,6 +56,19 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionStorage.removeItem(scrollKey);
     }
 
+    document.querySelectorAll(".message").forEach((message) => {
+        window.setTimeout(() => {
+            message.classList.add("is-hiding");
+            window.setTimeout(() => {
+                const wrapper = message.closest(".messages");
+                message.remove();
+                if (wrapper && !wrapper.querySelector(".message")) {
+                    wrapper.remove();
+                }
+            }, 260);
+        }, 3500);
+    });
+
     const toggle = document.querySelector("[data-menu-toggle]");
     const menu = document.querySelector("[data-menu]");
     const menuBackdrop = document.querySelector("[data-menu-backdrop]");
