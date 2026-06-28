@@ -183,47 +183,15 @@ a {
 }
 
 .app-shell.sidebar-collapsed .sidebar-collapse {
-    transform: rotate(180deg);
+    color: #244372;
+    left: 50%;
+    right: auto;
+    top: 18px;
+    transform: translateX(-50%) rotate(180deg);
 }
 
 .app-shell.sidebar-collapsed .sidebar-brand {
     display: none;
-}
-
-.app-shell.sidebar-collapsed .sidebar-collapse {
-    left: 50%;
-    right: auto;
-    top: 18px;
-    transform: translateX(-50%);
-}
-
-.app-shell.sidebar-collapsed .sidebar-collapse::before,
-.app-shell.sidebar-collapsed .sidebar-collapse::after {
-    background: currentColor;
-    border-radius: 999px;
-    content: "";
-    height: 2px;
-    left: 8px;
-    position: absolute;
-    width: 14px;
-}
-
-.app-shell.sidebar-collapsed .sidebar-collapse::before {
-    box-shadow: 0 5px 0 currentColor;
-    top: 9px;
-}
-
-.app-shell.sidebar-collapsed .sidebar-collapse::after {
-    top: 19px;
-}
-
-.app-shell.sidebar-collapsed .sidebar-collapse {
-    color: transparent;
-}
-
-.app-shell.sidebar-collapsed .sidebar-collapse::before,
-.app-shell.sidebar-collapsed .sidebar-collapse::after {
-    color: #244372;
 }
 
 .app-shell.sidebar-collapsed .nav-group {
@@ -617,12 +585,25 @@ th {
 .messages {
     display: grid;
     gap: 8px;
-    margin-bottom: 18px;
+    left: 50%;
+    max-width: min(460px, calc(100vw - 32px));
+    position: fixed;
+    top: 24px;
+    transform: translateX(-50%);
+    width: max-content;
+    z-index: 80;
 }
 
 .message {
     border-radius: 6px;
+    box-shadow: 0 14px 30px rgba(9, 27, 58, 0.16);
     padding: 10px 12px;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.message.is-hiding {
+    opacity: 0;
+    transform: translateY(-8px);
 }
 
 .message.success {
