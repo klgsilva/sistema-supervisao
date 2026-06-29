@@ -4,10 +4,36 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from flask_login import current_user, login_required
 
 from app.extensions import db
-from app.models import BALANCO_ITENS_FIXOS, ChecklistItem, CorredorLoja, Loja, SupervisorLoja, Usuario
+from app.models import (
+    BALANCO_ITENS_FIXOS,
+    PERFIS_USUARIO,
+    PERMISSOES_POR_PERFIL,
+    PERMISSOES_USUARIO,
+    ChecklistItem,
+    CorredorLoja,
+    Loja,
+    SupervisorLoja,
+    Usuario,
+    UsuarioPermissao,
+)
 
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+def permissoes_disponiveis():
+    return set(PERMISSOES_USUARIO)
+
+
+def permissoes_padrao(perfil):
+    return PERMISSOES_POR_PERFIL.get(perfil, set()) & permissoes_disponiveis()
+
+
+def aplicar_permissoes_padrao(usuario):
+    if usuario.is_admin:
+        return
+    for permissao in permissoes_padrao(usuario.perfil):
+        db.session.add(UsuarioPermissao(usuario=usuario, permissao=permissao))
 
 
 def criar_itens_fixos_balanco(loja):
@@ -18,7 +44,7 @@ def criar_itens_fixos_balanco(loja):
                 CorredorLoja(
                     loja_id=loja.id,
                     nome=nome_item,
-                    descricao="Item fixo do balanço",
+                    descricao="Item fixo do balanco",
                     ordem=-100 + ordem,
                     ativo=True,
                 )
@@ -89,83 +115,132 @@ def editar_loja(loja_id):
 @admin_required
 def supervisores():
     if request.method == "POST":
-        supervisor = Usuario(
+        perfil = request.form.get("perfil", "supervisor")
+        if perfil not in PERFIS_USUARIO:
+            abort(400)
+        usuario = Usuario(
             nome=request.form["nome"].strip(),
             email=request.form["email"].strip().lower(),
-            perfil="supervisor",
+            perfil=perfil,
             ativo=True,
         )
-        supervisor.set_password(request.form["senha"])
-        db.session.add(supervisor)
+        usuario.set_password(request.form["senha"])
+        db.session.add(usuario)
+        db.session.flush()
+        aplicar_permissoes_padrao(usuario)
         db.session.commit()
-        flash("Supervisor cadastrado.", "success")
+        flash("Usuario cadastrado.", "success")
         return redirect(url_for("admin.supervisores"))
 
-    supervisores_lista = Usuario.query.filter_by(perfil="supervisor").order_by(Usuario.nome).all()
-    return render_template("admin/supervisores.html", supervisores=supervisores_lista)
+    usuarios_lista = Usuario.query.order_by(Usuario.nome).all()
+    return render_template("admin/supervisores.html", usuarios=usuarios_lista, perfis=PERFIS_USUARIO)
 
 
 @bp.route("/supervisores/<int:supervisor_id>/editar", methods=["POST"])
 @admin_required
 def editar_supervisor(supervisor_id):
-    supervisor = db.get_or_404(Usuario, supervisor_id)
-    supervisor.nome = request.form["nome"].strip()
-    supervisor.email = request.form["email"].strip().lower()
-    supervisor.ativo = bool(request.form.get("ativo"))
+    usuario = db.get_or_404(Usuario, supervisor_id)
+    perfil_anterior = usuario.perfil
+    perfil = request.form.get("perfil", usuario.perfil)
+    if perfil not in PERFIS_USUARIO:
+        abort(400)
+    usuario.nome = request.form["nome"].strip()
+    usuario.email = request.form["email"].strip().lower()
+    usuario.perfil = perfil
+    usuario.ativo = bool(request.form.get("ativo"))
     senha = request.form.get("senha", "").strip()
     if senha:
-        supervisor.set_password(senha)
+        usuario.set_password(senha)
+    if usuario.permissoes:
+        permissoes_atuais = {item.permissao for item in usuario.permissoes}
+        permissoes_validas = permissoes_disponiveis()
+        for item in list(usuario.permissoes):
+            if item.permissao not in permissoes_validas:
+                db.session.delete(item)
+        if perfil_anterior != perfil:
+            UsuarioPermissao.query.filter_by(usuario_id=usuario.id).delete()
+            aplicar_permissoes_padrao(usuario)
     db.session.commit()
-    flash("Supervisor atualizado.", "success")
+    flash("Usuario atualizado.", "success")
     return redirect(url_for("admin.supervisores"))
 
 
 @bp.route("/supervisores/<int:supervisor_id>/excluir", methods=["POST"])
 @admin_required
 def excluir_supervisor(supervisor_id):
-    supervisor = db.get_or_404(Usuario, supervisor_id)
-    if supervisor.perfil != "supervisor":
+    usuario = db.get_or_404(Usuario, supervisor_id)
+    if usuario.id == current_user.id:
         abort(400)
-    if supervisor.visitas:
-        flash("Supervisor possui visitas no histórico. Inative em vez de excluir.", "error")
+    if usuario.visitas:
+        flash("Usuario possui visitas no historico. Inative em vez de excluir.", "error")
         return redirect(url_for("admin.supervisores"))
 
-    SupervisorLoja.query.filter_by(supervisor_id=supervisor.id).delete()
-    db.session.delete(supervisor)
+    SupervisorLoja.query.filter_by(supervisor_id=usuario.id).delete()
+    db.session.delete(usuario)
     db.session.commit()
-    flash("Supervisor excluído.", "success")
+    flash("Usuario excluido.", "success")
     return redirect(url_for("admin.supervisores"))
 
 
 @bp.route("/vinculos", methods=["GET", "POST"])
 @admin_required
 def vinculos():
-    supervisores_lista = Usuario.query.filter_by(perfil="supervisor", ativo=True).order_by(Usuario.nome).all()
+    supervisores_lista = (
+        Usuario.query.filter(Usuario.perfil != "admin", Usuario.ativo.is_(True))
+        .order_by(Usuario.nome)
+        .all()
+    )
     lojas_lista = Loja.query.order_by(Loja.nome).all()
+    permissoes_validas = permissoes_disponiveis()
 
     if request.method == "POST":
         supervisor_id = int(request.form["supervisor_id"])
+        usuario = db.get_or_404(Usuario, supervisor_id)
+        if usuario.is_admin:
+            abort(400)
         lojas_ids = {int(valor) for valor in request.form.getlist("lojas")}
+        permissoes = {valor for valor in request.form.getlist("permissoes") if valor in permissoes_validas}
+        if not permissoes:
+            flash("Marque pelo menos uma permissao para este usuario.", "error")
+            return redirect(url_for("admin.vinculos", supervisor_id=supervisor_id))
+
         SupervisorLoja.query.filter_by(supervisor_id=supervisor_id).delete()
         for loja_id in lojas_ids:
             db.session.add(SupervisorLoja(supervisor_id=supervisor_id, loja_id=loja_id))
+
+        UsuarioPermissao.query.filter_by(usuario_id=supervisor_id).delete()
+        for permissao in permissoes:
+            db.session.add(UsuarioPermissao(usuario_id=supervisor_id, permissao=permissao))
         db.session.commit()
-        flash("Vínculos atualizados.", "success")
+        flash("Vinculos atualizados.", "success")
         return redirect(url_for("admin.vinculos", supervisor_id=supervisor_id))
 
     supervisor_id = request.args.get("supervisor_id", type=int)
+    usuario_selecionado = db.session.get(Usuario, supervisor_id) if supervisor_id else None
+    if usuario_selecionado and usuario_selecionado.is_admin:
+        usuario_selecionado = None
+        supervisor_id = None
     selecionadas = set()
+    permissoes_selecionadas = set()
     if supervisor_id:
         selecionadas = {
             item.loja_id for item in SupervisorLoja.query.filter_by(supervisor_id=supervisor_id).all()
         }
+        permissoes_selecionadas = {
+            item.permissao for item in UsuarioPermissao.query.filter_by(usuario_id=supervisor_id).all()
+        }
+        if not permissoes_selecionadas and usuario_selecionado:
+            permissoes_selecionadas = permissoes_padrao(usuario_selecionado.perfil)
 
     return render_template(
         "admin/vinculos.html",
         supervisores=supervisores_lista,
         lojas=lojas_lista,
         supervisor_id=supervisor_id,
+        usuario_selecionado=usuario_selecionado,
         selecionadas=selecionadas,
+        permissoes_itens=PERMISSOES_USUARIO,
+        permissoes_selecionadas=permissoes_selecionadas,
     )
 
 
