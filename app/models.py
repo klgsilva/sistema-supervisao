@@ -9,6 +9,59 @@ from app.extensions import db, login_manager
 
 
 BALANCO_ITENS_FIXOS = ("Avarias/Loja", "Remanejamento", "Descartes", "Uso e consumo")
+PERFIS_USUARIO = {
+    "admin": "Administrador",
+    "supervisor": "Supervisor (a)",
+    "operador": "Operador (a)",
+}
+
+PERMISSOES_USUARIO = {
+    "dashboard": "Painel",
+    "nova_visita": "Nova visita",
+    "ocorrencias": "Ocorrencias",
+    "manutencoes": "Manutencoes",
+    "criar_manutencao": "Registrar manutencao",
+    "atualizar_manutencao": "Atualizar manutencao/ocorrencia",
+    "balancos": "Balancos",
+    "lancar_balanco": "Lancar balanco",
+    "relatorios": "Relatorios",
+    "financeiro": "Financeiro",
+}
+
+PERMISSOES_POR_PERFIL = {
+    "admin": {
+        "dashboard",
+        "ocorrencias",
+        "manutencoes",
+        "atualizar_manutencao",
+        "balancos",
+        "relatorios",
+        "financeiro",
+        "cadastros",
+        "liberar_balanco",
+        "revisar_balanco",
+    },
+    "supervisor": {
+        "dashboard",
+        "nova_visita",
+        "ocorrencias",
+        "manutencoes",
+        "criar_manutencao",
+        "atualizar_manutencao",
+        "balancos",
+        "lancar_balanco",
+        "relatorios",
+        "financeiro",
+    },
+    "operador": {
+        "dashboard",
+        "nova_visita",
+        "ocorrencias",
+        "manutencoes",
+        "criar_manutencao",
+        "atualizar_manutencao",
+    },
+}
 
 
 class Usuario(UserMixin, db.Model):
@@ -20,6 +73,7 @@ class Usuario(UserMixin, db.Model):
     ativo = db.Column(db.Boolean, nullable=False, default=True)
 
     lojas = db.relationship("SupervisorLoja", back_populates="supervisor", cascade="all, delete-orphan")
+    permissoes = db.relationship("UsuarioPermissao", back_populates="usuario", cascade="all, delete-orphan")
     visitas = db.relationship("Visita", back_populates="supervisor")
 
     def set_password(self, senha):
@@ -31,6 +85,22 @@ class Usuario(UserMixin, db.Model):
     @property
     def is_admin(self):
         return self.perfil == "admin"
+
+    @property
+    def perfil_label(self):
+        return PERFIS_USUARIO.get(self.perfil, self.perfil.title())
+
+    @property
+    def can_view_all_stores(self):
+        return self.is_admin
+
+    def can_access(self, permissao):
+        if self.is_admin:
+            return True
+        permissoes_customizadas = {item.permissao for item in self.permissoes}
+        if permissoes_customizadas:
+            return permissao in permissoes_customizadas
+        return permissao in PERMISSOES_POR_PERFIL.get(self.perfil, set())
 
     @property
     def is_active(self):
@@ -54,6 +124,16 @@ class Loja(db.Model):
     balancos = db.relationship("BalancoMensal", back_populates="loja", cascade="all, delete-orphan")
     corredores_balanco = db.relationship("CorredorLoja", back_populates="loja", cascade="all, delete-orphan")
     manutencoes = db.relationship("Manutencao", back_populates="loja", cascade="all, delete-orphan")
+
+
+class UsuarioPermissao(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False)
+    permissao = db.Column(db.String(60), nullable=False)
+
+    usuario = db.relationship("Usuario", back_populates="permissoes")
+
+    __table_args__ = (UniqueConstraint("usuario_id", "permissao", name="uq_usuario_permissao"),)
 
 
 class SupervisorLoja(db.Model):
