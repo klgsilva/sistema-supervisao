@@ -3,7 +3,7 @@
 <div class="page-head">
     <div>
         <h1>Manual do sistema</h1>
-        <p>Guia rápido para admin e supervisor (a). Desenvolvido por Ricardo Klinger.</p>
+        <p>Guia rapido para administrador, supervisor (a) e operador (a). Desenvolvido por Ricardo Klinger.</p>
     </div>
 </div>
 
@@ -12,15 +12,15 @@
     <div class="manual-grid">
         <div class="manual-card">
             <strong>1. Cadastros</strong>
-            <p>O admin cadastra lojas, corredores, supervisor (a), vínculos e checklist.</p>
+            <p>O administrador cadastra lojas, corredores, usuarios, vinculos e checklist.</p>
         </div>
         <div class="manual-card">
-            <strong>2. Visitas</strong>
-            <p>O supervisor (a) registra a visita, informa venda, responde checklist e adiciona fotos quando precisar.</p>
+            <strong>2. Permissoes</strong>
+            <p>Em Vinculos, o administrador escolhe o usuario e marca as lojas e acessos liberados.</p>
         </div>
         <div class="manual-card">
-            <strong>3. Acompanhamento</strong>
-            <p>O admin acompanha visitas, ocorrências, manutenções, balanços e relatórios.</p>
+            <strong>3. Operacao</strong>
+            <p>Cada usuario acessa somente as telas e lojas que foram liberadas para ele.</p>
         </div>
     </div>
 </section>
@@ -28,40 +28,56 @@
 <section>
     <h2>Menu lateral</h2>
     <ul class="manual-list">
-        <li>O sistema usa um menu lateral organizado por grupos: Operação, Gestão, Cadastros e Suporte.</li>
-        <li>No computador, o menu pode ser recolhido para mostrar apenas ícones.</li>
-        <li>No celular, use o botão de menu para abrir a gaveta lateral. Ao tocar fora ou escolher uma opção, o menu fecha.</li>
+        <li>O menu mostra somente as opcoes liberadas para o usuario logado.</li>
+        <li>No computador, o menu pode ser recolhido para mostrar apenas icones.</li>
+        <li>No celular, use o botao de menu para abrir a gaveta lateral. Ao tocar fora ou escolher uma opcao, o menu fecha.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Usuarios e permissoes</h2>
+    <ul class="manual-list">
+        <li><strong>Administrador:</strong> acessa tudo e faz os cadastros, vinculos, checklist, liberacao de balanco e revisoes.</li>
+        <li><strong>Supervisor (a):</strong> perfil usado para responsaveis por lojas e rotinas de supervisao.</li>
+        <li><strong>Operador (a):</strong> perfil usado para usuarios de apoio, checagens ou tarefas especificas.</li>
+        <li>Supervisor (a) e operador (a) nao tem acesso fixo por nome do perfil. O acesso real e definido em <strong>Vinculos</strong>.</li>
+        <li>Se o administrador marcar Relatorios para um operador, ele acessa Relatorios. Se desmarcar Financeiro, ele nao acessa Financeiro.</li>
+    </ul>
+</section>
+
+<section>
+    <h2>Como liberar acesso</h2>
+    <ul class="manual-list">
+        <li>Entre em <strong>Usuarios</strong> para cadastrar nome, e-mail, senha e perfil.</li>
+        <li>Depois entre em <strong>Vinculos</strong> e selecione o usuario.</li>
+        <li>Marque as lojas que esse usuario pode acessar.</li>
+        <li>Marque as caixas em <strong>Acessos liberados</strong>, como Painel, Nova visita, Ocorrencias, Manutencoes, Balancos, Relatorios ou Financeiro.</li>
+        <li>Salve os vinculos. O menu do usuario muda automaticamente conforme as permissoes marcadas.</li>
     </ul>
 </section>
 
 <section class="grid two">
     <div>
-        <h2>Admin</h2>
+        <h2>Administrador</h2>
         <ul class="manual-list">
             <li><strong>Lojas:</strong> cadastrar lojas e corredores/setores de cada loja.</li>
-            <li><strong>Supervisores:</strong> cadastrar, editar, ativar ou inativar supervisor (a).</li>
-            <li><strong>Vínculos:</strong> definir quais lojas pertencem a cada supervisor (a).</li>
-            <li><strong>Checklist:</strong> cadastrar e manter os itens que serão respondidos nas visitas.</li>
-            <li><strong>Ocorrências:</strong> acompanhar problemas abertos, em andamento, resolvidos ou cancelados.</li>
-            <li><strong>Manutenções:</strong> visualizar e analisar registros das lojas. Admin não registra manutenção.</li>
-            <li><strong>Balanços:</strong> liberar balanço, fechar ciclo e lançar valores revisados quando necessário.</li>
-            <li><strong>Relatórios:</strong> filtrar por dia, mês, período e supervisor (a).</li>
-            <li><strong>Financeiro:</strong> módulo reservado para futuras atualizações financeiras.</li>
+            <li><strong>Usuarios:</strong> cadastrar, editar, ativar ou inativar usuarios.</li>
+            <li><strong>Vinculos:</strong> definir lojas e permissoes de cada supervisor (a) ou operador (a).</li>
+            <li><strong>Checklist:</strong> cadastrar e manter os itens respondidos nas visitas.</li>
+            <li><strong>Ocorrencias:</strong> acompanhar problemas abertos, em andamento, resolvidos ou cancelados.</li>
+            <li><strong>Manutencoes:</strong> visualizar e analisar registros das lojas. Administrador nao registra manutencao.</li>
+            <li><strong>Balancos:</strong> liberar balanco, fechar ciclo e lancar valores revisados quando necessario.</li>
+            <li><strong>Relatorios:</strong> filtrar por dia, mes, periodo e usuario.</li>
         </ul>
     </div>
     <div>
-        <h2>Supervisor (a)</h2>
+        <h2>Supervisor (a) e Operador (a)</h2>
         <ul class="manual-list">
-            <li><strong>Painel:</strong> ver lojas vinculadas, visitas do dia, pendências e ocorrências ativas.</li>
-            <li><strong>Nova visita:</strong> escolher uma loja pendente do dia e registrar a visita.</li>
-            <li><strong>Venda:</strong> informar a venda do dia anterior no formato em reais.</li>
-            <li><strong>Checklist:</strong> marcar OK quando estiver padrão e NOK quando estiver fora do padrão.</li>
-            <li><strong>Avarias:</strong> responder Não quando não houver avarias; se marcar Sim, informar quais produtos estão avariados.</li>
-            <li><strong>NOK:</strong> comentário é obrigatório e gera ocorrência automaticamente.</li>
-            <li><strong>Foto OK:</strong> pode ser usada como evidência, mas não cria ocorrência.</li>
-            <li><strong>Manutenções:</strong> registrar problema, categoria, status, custo e foto opcional.</li>
-            <li><strong>Balanços:</strong> lançar valores por corredor quando o balanço estiver aberto.</li>
-            <li><strong>Financeiro:</strong> por enquanto mostra aviso de módulo em atualização.</li>
+            <li><strong>Painel:</strong> ver lojas vinculadas, visitas do dia, pendencias e ocorrencias ativas, se liberado.</li>
+            <li><strong>Nova visita:</strong> escolher uma loja pendente do dia e registrar a visita, se liberado.</li>
+            <li><strong>Manutencoes:</strong> registrar problema, categoria, status, custo e foto opcional, se liberado.</li>
+            <li><strong>Balancos:</strong> lancar valores por corredor quando o balanco estiver aberto, se liberado.</li>
+            <li><strong>Relatorios e Financeiro:</strong> aparecem somente quando o administrador marcar essas permissoes no vinculo.</li>
         </ul>
     </div>
 </section>
@@ -71,82 +87,82 @@
     <div class="manual-grid">
         <div class="manual-card">
             <strong>OK</strong>
-            <p>Use quando o item está dentro do padrão. Pode anexar foto como evidência.</p>
+            <p>Use quando o item esta dentro do padrao. Pode anexar foto como evidencia.</p>
         </div>
         <div class="manual-card">
             <strong>NOK</strong>
-            <p>Use quando existe problema. O comentário é obrigatório e uma ocorrência aberta é criada automaticamente.</p>
+            <p>Use quando existe problema. O comentario e obrigatorio e uma ocorrencia aberta e criada automaticamente.</p>
         </div>
         <div class="manual-card">
             <strong>Informativo</strong>
-            <p>Alguns itens têm apenas campo de texto, como assuntos tratados em reuniões.</p>
+            <p>Alguns itens tem apenas campo de texto, como assuntos tratados em reunioes.</p>
         </div>
         <div class="manual-card">
             <strong>Avarias</strong>
-            <p>Funciona como Sim/Não. Se marcar Sim, o sistema exige a descrição dos produtos avariados e cria ocorrência.</p>
+            <p>Funciona como Sim/Nao. Se marcar Sim, o sistema exige a descricao dos produtos avariados e cria ocorrencia.</p>
         </div>
         <div class="manual-card">
             <strong>Fotos</strong>
-            <p>Use Tirar foto para abrir a câmera ou Galeria para escolher uma imagem salva.</p>
+            <p>Use Tirar foto para abrir a camera ou Galeria para escolher uma imagem salva.</p>
         </div>
     </div>
 </section>
 
 <section>
-    <h2>Manutenções</h2>
+    <h2>Manutencoes</h2>
     <ul class="manual-list">
-        <li>Supervisor (a) escolhe a loja e registra a manutenção.</li>
-        <li>Admin visualiza, filtra e analisa. Admin não dá entrada em manutenção.</li>
-        <li>Use <strong>Refrigeração / Câmara fria</strong> para equipamentos terceirizados e controle semanal.</li>
-        <li>Use <strong>Manutenção padrão</strong> para elétrica, computadores, estrutura e itens internos.</li>
-        <li>O campo custo serve para registrar gasto com material ou serviço.</li>
-        <li>Manutenção pendente ou em andamento de dias anteriores aparece como alerta ao escolher a loja.</li>
+        <li>Usuario com permissao escolhe a loja e registra a manutencao.</li>
+        <li>Administrador visualiza, filtra e analisa. Administrador nao da entrada em manutencao.</li>
+        <li>Use <strong>Refrigeracao / Camara fria</strong> para equipamentos terceirizados e controle semanal.</li>
+        <li>Use <strong>Manutencao padrao</strong> para eletrica, computadores, estrutura e itens internos.</li>
+        <li>O campo custo serve para registrar gasto com material ou servico.</li>
+        <li>Manutencao pendente ou em andamento de dias anteriores aparece como alerta ao escolher a loja.</li>
     </ul>
 </section>
 
 <section>
-    <h2>Balanços</h2>
+    <h2>Balancos</h2>
     <ul class="manual-list">
-        <li>Admin libera o balanço informando competência e data da contagem.</li>
-        <li>Supervisor (a) lança os valores por itens fixos e por corredor/setor da loja.</li>
-        <li>Itens fixos do balanço: Avarias/Loja, Remanejamento, Descartes e Uso e consumo.</li>
-        <li>Corredor lançado fica bloqueado e não pode ser editado pelo supervisor (a).</li>
-        <li>Campo em branco continua disponível para lançamento posterior.</li>
-        <li>Valor 0,00 conta como lançamento e significa que não houve valor naquele item.</li>
-        <li>Admin pode lançar valor revisado quando houver correção da central.</li>
+        <li>Administrador libera o balanco informando competencia e data da contagem.</li>
+        <li>Usuario com permissao de lancar balanco informa os valores por itens fixos e por corredor/setor da loja.</li>
+        <li>Itens fixos do balanco: Avarias/Loja, Remanejamento, Descartes e Uso e consumo.</li>
+        <li>Corredor lancado fica bloqueado e nao pode ser editado pelo usuario.</li>
+        <li>Campo em branco continua disponivel para lancamento posterior.</li>
+        <li>Valor 0,00 conta como lancamento e significa que nao houve valor naquele item.</li>
+        <li>Administrador pode lancar valor revisado quando houver correcao da central.</li>
     </ul>
 </section>
 
 <section>
     <h2>Financeiro</h2>
     <ul class="manual-list">
-        <li>O menu Financeiro já está disponível, mas ainda não possui lançamentos financeiros ativos.</li>
-        <li>Ao acessar, o sistema mostra a mensagem: "Parte financeira em atualização. Aguarde novas atualizações."</li>
-        <li>Esse módulo foi reservado para controle futuro de limites, gastos urgentes, aprovações e relatórios financeiros por loja.</li>
+        <li>O menu Financeiro ja esta disponivel, mas ainda nao possui lancamentos financeiros ativos.</li>
+        <li>Ao acessar, o sistema mostra a mensagem: "Parte financeira em atualizacao. Aguarde novas atualizacoes."</li>
+        <li>Esse modulo foi reservado para controle futuro de limites, gastos urgentes, aprovacoes e relatorios financeiros por loja.</li>
     </ul>
 </section>
 
 <section>
-    <h2>Relatórios</h2>
+    <h2>Relatorios</h2>
     <ul class="manual-list">
         <li><strong>Rankings:</strong> lojas que mais venderam e lojas com mais problemas.</li>
-        <li><strong>Visitas por supervisor (a):</strong> mostra quais lojas foram visitadas por cada supervisor (a).</li>
-        <li><strong>Balanço e comparação:</strong> compara valor fechado, revisado e mês anterior.</li>
-        <li>Admin pode filtrar por supervisor (a). Supervisor (a) vê apenas suas lojas.</li>
+        <li><strong>Visitas por usuario:</strong> mostra quais lojas foram visitadas por cada supervisor (a) ou operador (a).</li>
+        <li><strong>Balanco e comparacao:</strong> compara valor fechado, revisado e mes anterior.</li>
+        <li>Administrador pode filtrar por usuario. Outros usuarios veem apenas as lojas vinculadas.</li>
     </ul>
 </section>
 
 <section>
     <h2>Regras importantes</h2>
     <ul class="manual-list">
-        <li>Admin não registra visita.</li>
-        <li>Admin não registra manutenção.</li>
-        <li>Supervisor (a) vê apenas lojas vinculadas.</li>
-        <li>Cada loja permite uma visita por dia por supervisor (a).</li>
+        <li>Administrador nao registra visita.</li>
+        <li>Administrador nao registra manutencao.</li>
+        <li>Supervisor (a) e operador (a) veem apenas lojas vinculadas.</li>
+        <li>Cada loja permite uma visita por dia por usuario.</li>
         <li>No dia seguinte, a lista de visitas pendentes reinicia normalmente.</li>
-        <li>Checklist NOK exige comentário e cria ocorrência.</li>
-        <li>Avarias marcadas como Sim exigem informar quais produtos estão avariados.</li>
-        <li>Balanço só aceita lançamento quando está aberto.</li>
+        <li>Checklist NOK exige comentario e cria ocorrencia.</li>
+        <li>Avarias marcadas como Sim exigem informar quais produtos estao avariados.</li>
+        <li>Balanco so aceita lancamento quando esta aberto.</li>
     </ul>
 </section>
 {% endblock %}

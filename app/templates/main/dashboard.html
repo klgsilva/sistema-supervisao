@@ -5,7 +5,7 @@
         <h1>Painel</h1>
         <p>{{ current_user.nome }} · {{ hoje.strftime("%d/%m/%Y") }}</p>
     </div>
-    {% if not current_user.is_admin %}
+    {% if current_user.can_access("nova_visita") %}
     <a class="button" href="{{ url_for('visitas.nova') }}">Registrar visita</a>
     {% endif %}
 </div>

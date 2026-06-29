@@ -51,7 +51,7 @@
         <p>Controle de liberação, lançamento e revisão dos balanços das lojas.</p>
     </div>
     <form method="get" class="filter-form">
-        {% if current_user.is_admin %}
+        {% if current_user.can_view_all_stores %}
         <label>
             Balanço liberado
             <select name="ciclo_id">
@@ -154,7 +154,7 @@
         {% if ciclo_balanco %}
         <input type="hidden" name="ciclo_id" value="{{ ciclo_balanco.id }}">
         {% endif %}
-        {% if current_user.is_admin and supervisor_id %}
+        {% if current_user.can_view_all_stores and supervisor_id %}
         <input type="hidden" name="supervisor_id" value="{{ supervisor_id }}">
         {% endif %}
         <label>

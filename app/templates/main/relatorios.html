@@ -30,7 +30,7 @@
             Data final
             <input type="date" name="data_fim" value="{{ data_fim_valor }}" data-range-end-filter>
         </label>
-        {% if current_user.is_admin %}
+        {% if current_user.can_view_all_stores %}
         <label>
             Balanço
             <select name="ciclo_id">
