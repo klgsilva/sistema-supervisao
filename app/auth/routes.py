@@ -7,10 +7,22 @@ from app.models import Usuario
 bp = Blueprint("auth", __name__)
 
 
+def destino_inicial(usuario):
+    if usuario.can_access("dashboard"):
+        return url_for("main.dashboard")
+    if usuario.can_access("relatorios"):
+        return url_for("main.relatorios")
+    if usuario.can_access("balancos"):
+        return url_for("main.balancos")
+    if usuario.can_access("financeiro"):
+        return url_for("main.financeiro")
+    return url_for("main.manual")
+
+
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("main.dashboard"))
+        return redirect(destino_inicial(current_user))
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
@@ -19,7 +31,7 @@ def login():
 
         if usuario and usuario.ativo and usuario.check_password(senha):
             login_user(usuario)
-            return redirect(request.args.get("next") or url_for("main.dashboard"))
+            return redirect(request.args.get("next") or destino_inicial(usuario))
 
         flash("E-mail ou senha inválidos.", "error")
 
