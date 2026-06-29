@@ -34,7 +34,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Sistema de Visita de Supervisão{% endblock %}</title>
+    <title>{% block title %}Sistema de Visita de Supervisao{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -48,34 +48,50 @@
     <div class="app-shell" data-app-shell>
         <aside class="sidebar" data-menu>
             <button class="sidebar-collapse" type="button" data-sidebar-collapse aria-label="Recolher menu">&#8249;</button>
-            <a class="brand sidebar-brand" href="{{ url_for('main.dashboard') }}">
-                <span class="brand-greeting">Olá,</span>
+            <a class="brand sidebar-brand" href="{{ url_for('main.dashboard') if current_user.can_access('dashboard') else url_for('main.relatorios') }}">
+                <span class="brand-greeting">Ola,</span>
                 <span>{{ current_user.nome }}</span>
             </a>
             <nav class="nav">
+                {% if current_user.can_access("dashboard") or current_user.can_access("nova_visita") or current_user.can_access("ocorrencias") or current_user.can_access("manutencoes") %}
                 <div class="nav-group">
-                    <span>Operação</span>
+                    <span>Operacao</span>
+                    {% if current_user.can_access("dashboard") %}
                     <a class="{% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}" title="Painel">{{ nav_icon("painel") }}<span class="nav-text">Painel</span></a>
-                    {% if not current_user.is_admin %}
+                    {% endif %}
+                    {% if current_user.can_access("nova_visita") %}
                     <a class="{% if request.endpoint == 'visitas.nova' %}active{% endif %}" href="{{ url_for('visitas.nova') }}" title="Nova visita">{{ nav_icon("visita") }}<span class="nav-text">Nova visita</span></a>
                     {% endif %}
-                    <a class="{% if request.endpoint == 'visitas.ocorrencias' %}active{% endif %}" href="{{ url_for('visitas.ocorrencias') }}" title="Ocorrências">{{ nav_icon("ocorrencias") }}<span class="nav-text">Ocorrências</span></a>
-                    <a class="{% if request.endpoint == 'main.manutencoes' %}active{% endif %}" href="{{ url_for('main.manutencoes') }}" title="Manutenções">{{ nav_icon("manutencoes") }}<span class="nav-text">Manutenções</span></a>
+                    {% if current_user.can_access("ocorrencias") %}
+                    <a class="{% if request.endpoint == 'visitas.ocorrencias' %}active{% endif %}" href="{{ url_for('visitas.ocorrencias') }}" title="Ocorrencias">{{ nav_icon("ocorrencias") }}<span class="nav-text">Ocorrencias</span></a>
+                    {% endif %}
+                    {% if current_user.can_access("manutencoes") %}
+                    <a class="{% if request.endpoint == 'main.manutencoes' %}active{% endif %}" href="{{ url_for('main.manutencoes') }}" title="Manutencoes">{{ nav_icon("manutencoes") }}<span class="nav-text">Manutencoes</span></a>
+                    {% endif %}
                 </div>
+                {% endif %}
 
+                {% if current_user.can_access("balancos") or current_user.can_access("relatorios") or current_user.can_access("financeiro") %}
                 <div class="nav-group">
-                    <span>Gestão</span>
-                    <a class="{% if request.endpoint == 'main.balancos' %}active{% endif %}" href="{{ url_for('main.balancos') }}" title="Balanços">{{ nav_icon("balancos") }}<span class="nav-text">Balanços</span></a>
-                    <a class="{% if request.endpoint == 'main.relatorios' %}active{% endif %}" href="{{ url_for('main.relatorios') }}" title="Relatórios">{{ nav_icon("relatorios") }}<span class="nav-text">Relatórios</span></a>
+                    <span>Gestao</span>
+                    {% if current_user.can_access("balancos") %}
+                    <a class="{% if request.endpoint == 'main.balancos' %}active{% endif %}" href="{{ url_for('main.balancos') }}" title="Balancos">{{ nav_icon("balancos") }}<span class="nav-text">Balancos</span></a>
+                    {% endif %}
+                    {% if current_user.can_access("relatorios") %}
+                    <a class="{% if request.endpoint == 'main.relatorios' %}active{% endif %}" href="{{ url_for('main.relatorios') }}" title="Relatorios">{{ nav_icon("relatorios") }}<span class="nav-text">Relatorios</span></a>
+                    {% endif %}
+                    {% if current_user.can_access("financeiro") %}
                     <a class="{% if request.endpoint == 'main.financeiro' %}active{% endif %}" href="{{ url_for('main.financeiro') }}" title="Financeiro">{{ nav_icon("financeiro") }}<span class="nav-text">Financeiro</span></a>
+                    {% endif %}
                 </div>
+                {% endif %}
 
                 {% if current_user.is_admin %}
                 <div class="nav-group">
                     <span>Cadastros</span>
                     <a class="{% if request.endpoint == 'admin.lojas' %}active{% endif %}" href="{{ url_for('admin.lojas') }}" title="Lojas">{{ nav_icon("lojas") }}<span class="nav-text">Lojas</span></a>
-                    <a class="{% if request.endpoint == 'admin.supervisores' %}active{% endif %}" href="{{ url_for('admin.supervisores') }}" title="Supervisores">{{ nav_icon("supervisores") }}<span class="nav-text">Supervisores</span></a>
-                    <a class="{% if request.endpoint == 'admin.vinculos' %}active{% endif %}" href="{{ url_for('admin.vinculos') }}" title="Vínculos">{{ nav_icon("vinculos") }}<span class="nav-text">Vínculos</span></a>
+                    <a class="{% if request.endpoint == 'admin.supervisores' %}active{% endif %}" href="{{ url_for('admin.supervisores') }}" title="Usuarios">{{ nav_icon("supervisores") }}<span class="nav-text">Usuarios</span></a>
+                    <a class="{% if request.endpoint == 'admin.vinculos' %}active{% endif %}" href="{{ url_for('admin.vinculos') }}" title="Vinculos">{{ nav_icon("vinculos") }}<span class="nav-text">Vinculos</span></a>
                     <a class="{% if request.endpoint == 'admin.checklist' %}active{% endif %}" href="{{ url_for('admin.checklist') }}" title="Checklist">{{ nav_icon("checklist") }}<span class="nav-text">Checklist</span></a>
                 </div>
                 {% endif %}
