@@ -1,337 +1,171 @@
-# Manual de uso - Sistema de Visita de Supervisão
+# Manual de uso - Sistema de Visita de Supervisao
 
 Desenvolvido por Ricardo Klinger.
 
-Este documento explica o que cada perfil de usuário deve fazer no sistema e como usar os principais módulos no dia a dia.
+Este manual explica o fluxo do sistema e o que cada usuario pode fazer.
 
-## Perfis do sistema
+## Perfis
 
-O sistema possui dois perfis principais:
+O sistema trabalha com tres perfis:
 
-- **Admin**: gerencia cadastros, vínculos, balanços, relatórios, ocorrências e acompanha tudo.
-- **Supervisor (a)**: registra visitas, lança vendas, responde checklist, registra manutenções e lança balanços das lojas vinculadas.
+- **Administrador**: faz cadastros, vinculos, checklist, liberacao de balanco, revisoes e acompanhamento geral.
+- **Supervisor (a)**: perfil usado para usuarios responsaveis por lojas e rotinas de supervisao.
+- **Operador (a)**: perfil usado para usuarios de apoio, checagens ou tarefas especificas.
+
+Importante: para supervisor (a) e operador (a), o acesso real nao fica preso ao nome do perfil. O administrador decide em **Vinculos** quais lojas e quais telas cada usuario pode acessar.
+
+Exemplo: se um operador precisar ver Relatorios, o administrador marca a caixa **Relatorios** para ele. Se nao marcar Financeiro, ele nao acessa Financeiro.
 
 ## Fluxo geral
 
-1. O admin cadastra lojas, supervisor (a), vínculos e checklist.
-2. O supervisor (a) acessa o sistema pelo celular ou computador.
-3. O supervisor (a) registra as visitas das lojas do dia.
-4. Em cada visita, informa a venda diária, responde o checklist e adiciona fotos quando necessário.
-5. Se marcar NOK, o sistema cria ocorrência automaticamente.
-6. O admin acompanha visitas, ocorrências, manutenções, balanços e relatórios.
+1. O administrador cadastra lojas, corredores, usuarios e checklist.
+2. O administrador entra em **Vinculos**.
+3. Escolhe o usuario.
+4. Marca as lojas liberadas.
+5. Marca os acessos liberados.
+6. O usuario entra no sistema e ve somente o menu permitido.
 
-## Menu lateral
+## Usuarios
 
-O sistema usa um menu lateral organizado por grupos:
+Menu: **Usuarios**
 
-- **Operação**: Painel, Nova visita, Ocorrências e Manutenções.
-- **Gestão**: Balanços, Relatórios e Financeiro.
-- **Cadastros**: Lojas, Supervisores, Vínculos e Checklist.
-- **Suporte**: Ajuda e Sair.
+O administrador pode:
 
-No computador, o menu pode ser recolhido para mostrar apenas ícones.
+- cadastrar usuario;
+- escolher perfil: administrador, supervisor (a) ou operador (a);
+- editar nome, e-mail, senha e status;
+- ativar ou inativar usuario;
+- excluir usuario sem historico.
 
-No celular, o botão de menu abre a gaveta lateral. Ao tocar fora ou escolher uma opção, o menu fecha.
+## Vinculos
 
-## O que o admin deve fazer
+Menu: **Vinculos**
 
-### 1. Cadastrar lojas
+Nesta tela o administrador escolhe um usuario e marca:
+
+- lojas liberadas;
+- Painel;
+- Nova visita;
+- Ocorrencias;
+- Manutencoes;
+- Registrar manutencao;
+- Atualizar manutencao/ocorrencia;
+- Balancos;
+- Lancar balanco;
+- Relatorios;
+- Financeiro.
+
+Se a caixa estiver marcada, o usuario ve e acessa a funcao. Se estiver desmarcada, a funcao nao aparece no menu e tambem fica bloqueada por URL direta.
+
+## Lojas
 
 Menu: **Lojas**
 
-O admin deve manter as 12 lojas cadastradas e ativas.
+O administrador pode:
 
-Na tela de lojas, o admin pode:
-
-- cadastrar nova loja;
-- editar nome e código;
+- cadastrar lojas;
+- editar nome e codigo;
 - ativar ou inativar loja;
-- cadastrar corredores/setores da loja.
+- cadastrar corredores/setores de cada loja.
 
-### 2. Cadastrar corredores por loja
+Os corredores sao usados no lancamento do balanco. Cada loja pode ter corredores diferentes.
 
-Menu: **Lojas > Corredores por loja**
-
-Cada loja pode ter corredores ou setores próprios.
-
-Exemplos:
-
-- Açougue
-- Câmara fria
-- Higiene
-- Molhos
-- Secos
-- Hortifruti
-
-Os corredores são usados no lançamento do balanço. Cada loja pode ter uma estrutura diferente.
-
-### 3. Cadastrar supervisor (a)
-
-Menu: **Supervisores**
-
-O admin pode:
-
-- cadastrar supervisor (a);
-- editar nome, e-mail e senha;
-- ativar ou inativar usuário;
-- excluir apenas quando não houver histórico.
-
-O e-mail pode ser real ou fictício, desde que seja único no sistema.
-
-### 4. Vincular supervisor (a) às lojas
-
-Menu: **Vínculos**
-
-O admin escolhe um supervisor (a) e marca quais lojas pertencem a ele.
-
-Regra:
-
-- supervisor (a) só vê as lojas vinculadas;
-- admin vê todas as lojas.
-
-### 5. Cadastrar itens de checklist
+## Checklist
 
 Menu: **Checklist**
 
-O admin pode cadastrar e editar os itens que serão respondidos nas visitas.
+O administrador cadastra e edita os itens respondidos nas visitas.
 
-Exemplos de setores:
+Itens com **NOK** exigem comentario e criam ocorrencia automaticamente.
 
-- Atendimento
-- Loja
-- Estoque
-- Açougue
-- Ilhas
-- Hortifruti
-- Promoções
-- Reuniões
+## Visitas
 
-### 6. Acompanhar painel principal
+Menu: **Nova visita**
 
-Menu: **Painel**
+Usuario com permissao escolhe uma loja pendente do dia e registra:
 
-O admin acompanha:
+- venda diaria;
+- observacao geral;
+- respostas do checklist;
+- fotos quando necessario.
 
-- lojas visitadas hoje;
-- pendentes do dia;
-- ocorrências ativas;
-- detalhes das visitas realizadas.
+Regras:
 
-### 7. Acompanhar ocorrências
+- cada loja permite uma visita por dia por usuario;
+- no dia seguinte a lista de pendentes reinicia;
+- loja ja visitada no dia nao aparece para nova visita.
 
-Menu: **Ocorrências**
+## Avarias
 
-Ocorrência nasce automaticamente quando um item do checklist é marcado como NOK.
+O item de avarias funciona como Sim/Nao:
 
-O admin pode verificar:
+- marque **Nao** quando nao houver avarias;
+- marque **Sim** quando houver avarias;
+- ao marcar Sim, e obrigatorio informar quais produtos estao avariados;
+- ao marcar Sim, o sistema cria ocorrencia aberta.
 
-- loja;
-- item com problema;
-- descrição;
-- foto, quando houver;
-- status.
+## Fotos
 
-### 8. Financeiro
+Em visitas e manutencoes, quando disponivel:
 
-Menu: **Financeiro**
+- **Tirar foto** abre a camera;
+- **Galeria** permite escolher imagem salva.
 
-O módulo Financeiro já está disponível no menu, mas ainda está reservado para atualização futura.
+Foto em item OK serve como evidencia. Foto em item NOK fica ligada a ocorrencia.
 
-Ao acessar, o sistema mostra:
+## Ocorrencias
 
-**Parte financeira em atualização. Aguarde novas atualizações.**
+Menu: **Ocorrencias**
 
-Esse módulo poderá ser usado futuramente para controle de limites por loja, gastos urgentes, aprovações e relatórios financeiros.
+Ocorrencias nascem automaticamente quando um item do checklist e marcado como NOK.
 
-Status possíveis:
+Status possiveis:
 
 - aberta;
 - em andamento;
 - resolvida;
 - cancelada.
 
-### 8. Acompanhar manutenções
+Quando uma loja possui ocorrencia aberta, o sistema mostra alerta para verificar se o problema foi sanado.
 
-Menu: **Manutenções**
+## Manutencoes
 
-O admin não registra manutenção. Ele apenas visualiza, filtra e acompanha.
+Menu: **Manutencoes**
 
-Filtros disponíveis:
+Usuario com permissao pode registrar manutencao informando:
 
 - loja;
 - categoria;
-- status.
-
-Categorias:
-
-- refrigeração / câmara fria;
-- manutenção padrão.
-
-### 9. Liberar balanço
-
-Menu: **Balanços**
-
-O admin libera o balanço informando:
-
-- competência;
-- data da contagem;
-- observação, se necessário.
-
-Depois que o balanço é liberado, os campos de liberação ficam bloqueados para evitar alteração indevida.
-
-O admin também pode alterar o status do balanço:
-
-- aberto;
-- fechado;
-- cancelado.
-
-Quando o balanço está fechado, supervisor (a) não consegue lançar novos valores.
-
-### 10. Revisar balanço
-
-Menu: **Balanços**
-
-Depois que o supervisor (a) lança o valor fechado, o admin pode inserir o valor revisado, quando a central identificar diferença.
-
-O sistema mostra:
-
-- valor fechado original;
-- valor revisado;
-- diferença entre fechado e revisado;
-- valor considerado no relatório.
-
-### 11. Ver relatórios
-
-Menu: **Relatórios**
-
-O admin pode filtrar por:
-
-- mês;
-- dia;
-- período escolhido;
-- supervisor (a);
-- ciclo de balanço.
-
-Opções do relatório:
-
-- rankings;
-- visitas por supervisor (a);
-- balanço e comparação.
-
-## O que o supervisor (a) deve fazer
-
-### 1. Acessar o painel
-
-Menu: **Painel**
-
-O supervisor (a) vê apenas as lojas vinculadas a ele.
-
-No painel, ele acompanha:
-
-- lojas visitadas hoje;
-- lojas pendentes;
-- ocorrências ativas das lojas dele.
-
-### 2. Registrar visita
-
-Menu: **Nova visita**
-
-O supervisor (a) deve escolher uma loja pendente do dia.
-
-Regra:
-
-- cada loja pode ter apenas uma visita por dia por supervisor (a);
-- no dia seguinte a lista reinicia;
-- não existe trava se uma loja não foi visitada no dia anterior.
-
-Na visita, o supervisor (a) informa:
-
-- venda do dia anterior;
-- observação geral, se houver;
-- respostas do checklist.
-
-### 3. Responder checklist
-
-Cada item pode ser marcado como:
-
-- **OK**: está dentro do padrão;
-- **NOK**: está fora do padrão;
-- **Informativo**: campo apenas para texto, quando não faz sentido marcar OK/NOK.
-
-Quando marcar **NOK**:
-
-- comentário é obrigatório;
-- o sistema cria uma ocorrência aberta automaticamente;
-- pode anexar foto.
-
-Quando marcar **OK**:
-
-- pode anexar foto como evidência;
-- a foto aparece no detalhe da visita;
-- não cria ocorrência.
-
-### Avarias
-
-O item de avarias funciona de forma diferente dos demais:
-
-- marque **Não** quando não existirem avarias na loja;
-- marque **Sim** quando existirem avarias;
-- ao marcar **Sim**, o sistema exige informar quais produtos estão avariados;
-- ao marcar **Sim**, o sistema cria uma ocorrência aberta automaticamente.
-
-Itens de reunião não pedem foto, pois são apenas perguntas e registro de assunto.
-
-### 4. Anexar foto
-
-Nos campos de foto existem duas opções:
-
-- **Tirar foto**: abre a câmera;
-- **Galeria**: permite escolher imagem já salva.
-
-Após selecionar ou tirar foto, o sistema mostra uma mensagem confirmando que a foto foi adicionada.
-
-### 5. Ver ocorrências ativas durante a visita
-
-Se a loja possui ocorrência aberta, a tela de nova visita mostra um alerta.
-
-O supervisor (a) deve verificar se o problema foi resolvido e atualizar o status quando necessário.
-
-### 6. Registrar manutenção
-
-Menu: **Manutenções**
-
-O supervisor (a) escolhe a loja e registra a manutenção.
-
-Campos principais:
-
-- categoria;
 - tipo;
 - status;
-- equipamento ou área;
-- responsável;
+- area/equipamento;
+- responsavel;
 - custo;
 - foto opcional;
-- problema identificado;
-- data da solicitação;
-- data de atendimento;
-- observação.
+- problema;
+- datas;
+- observacao.
 
 Categorias:
 
-- **Refrigeração / Câmara fria**: usada para equipamentos terceirizados e conferência semanal.
-- **Manutenção padrão**: usada para itens internos da empresa, como elétrica, computadores e estrutura.
+- **Refrigeracao / Camara fria**: equipamentos terceirizados e controle semanal.
+- **Manutencao padrao**: eletrica, computadores, estrutura e itens internos.
 
-Após salvar, a tela volta ao estado inicial para evitar lançamento duplicado.
+Manutencao pendente ou em andamento de dias anteriores aparece como alerta.
 
-Se existir manutenção **pendente** ou **em andamento** de dias anteriores, o sistema mostra um alerta ao escolher a loja. O supervisor (a) deve verificar se foi resolvida e atualizar o status quando necessário.
+## Balancos
 
-### 7. Lançar balanço por corredores
+Menu: **Balancos**
 
-Menu: **Balanços**
+O administrador libera o balanco informando:
 
-O supervisor (a) escolhe a loja e informa os valores por itens fixos e por corredor/setor.
+- competencia;
+- data da contagem;
+- observacao, se necessario.
 
-Itens fixos do balanço:
+Usuario com permissao de **Lancar balanco** informa valores por itens fixos e corredores.
+
+Itens fixos:
 
 - Avarias/Loja;
 - Remanejamento;
@@ -340,82 +174,42 @@ Itens fixos do balanço:
 
 Regras:
 
-- cada corredor lançado fica bloqueado;
-- campo em branco continua disponível para lançamento posterior;
-- valor `0,00` conta como lançado e significa que não houve valor naquele item;
-- quando todos os corredores forem lançados, a loja fica bloqueada;
-- supervisor (a) não edita valor já lançado.
+- corredor lancado fica bloqueado;
+- campo em branco continua disponivel para lancamento posterior;
+- valor `0,00` conta como lancamento;
+- administrador pode lancar valor revisado quando houver correcao da central.
 
-Exemplo:
+## Relatorios
 
-Se a loja tem 5 corredores e o supervisor (a) lança apenas 3, os 3 ficam bloqueados e os outros 2 continuam abertos.
+Menu: **Relatorios**
 
-Se no mês não houve Remanejamento, informe `0,00`. Se deixar em branco, o sistema entende que aquele item ainda será lançado depois.
+Disponiveis:
 
-## Relatórios disponíveis
+- rankings de vendas e problemas;
+- visitas por usuario;
+- balanco e comparacao por loja;
+- filtros por mes, dia ou periodo escolhido;
+- exportacao CSV.
 
-### Rankings
+Administrador pode ver tudo. Outros usuarios veem apenas lojas vinculadas e somente se tiverem permissao de Relatorios.
 
-Mostra:
+## Financeiro
 
-- lojas que mais venderam no dia a dia;
-- lojas com mais problemas.
+Menu: **Financeiro**
 
-### Visitas por supervisor (a)
+Modulo reservado para futuras atualizacoes.
 
-Mostra:
+Mensagem exibida:
 
-- data;
-- supervisor (a);
-- loja;
-- venda;
-- quantidade de OK;
-- quantidade de NOK;
-- informativos;
-- ocorrências;
-- ocorrências abertas;
-- link para abrir o detalhe da visita.
-
-Esse relatório é útil para o admin verificar quais lojas cada supervisor (a) visitou.
-
-### Balanço e comparação
-
-Mostra por loja:
-
-- valor fechado;
-- valor revisado;
-- diferença da revisão;
-- valor considerado;
-- mês anterior;
-- diferença;
-- variação percentual;
-- visitas;
-- vendas nas visitas;
-- média por visita;
-- problemas;
-- ocorrências abertas;
-- ocorrências resolvidas.
+**Parte financeira em atualizacao. Aguarde novas atualizacoes.**
 
 ## Regras importantes
 
-- Admin não registra visita.
-- Admin não registra manutenção.
-- Supervisor (a) vê apenas suas lojas.
-- Cada loja só pode ter uma visita por dia por supervisor (a).
-- Checklist NOK exige comentário.
-- Checklist NOK cria ocorrência automaticamente.
-- Avarias marcadas como Sim exigem informar quais produtos estão avariados.
-- Ocorrência pode ser resolvida ou cancelada depois.
-- Foto OK é evidência, não ocorrência.
-- Foto NOK fica ligada à ocorrência.
-- Balanço só pode ser lançado quando estiver aberto.
-- Valor revisado do balanço é lançado pelo admin.
-- Corredores são cadastrados na tela de lojas.
-
-## Recomendações de uso
-
-- O supervisor (a) deve registrar a visita no mesmo dia em que ela acontecer.
-- O admin deve revisar ocorrências abertas com frequência.
-- O admin deve liberar o balanço apenas quando chegar o período correto.
-- Antes do primeiro balanço, cadastre os corredores de cada loja.
-- Ao fechar o balanço, confira se todas as lojas necessárias já foram lançadas.
+- Administrador nao registra visita.
+- Administrador nao registra manutencao.
+- Supervisor (a) e operador (a) veem apenas lojas vinculadas.
+- O menu muda conforme as permissoes marcadas em Vinculos.
+- Digitar URL direta nao libera acesso sem permissao.
+- Checklist NOK exige comentario.
+- Checklist NOK cria ocorrencia automaticamente.
+- Balanco so aceita lancamento quando esta aberto.
