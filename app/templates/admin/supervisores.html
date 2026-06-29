@@ -1,19 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-head"><h1>Supervisores</h1></div>
+<div class="page-head">
+    <div>
+        <h1>Usuarios</h1>
+        <p>Cadastre usuarios e defina o nivel de permissao de cada um.</p>
+    </div>
+</div>
+
 <form method="post" class="form-inline">
     <input name="nome" placeholder="Nome" required>
     <input type="email" name="email" placeholder="E-mail" required>
     <input type="password" name="senha" placeholder="Senha" required>
+    <select name="perfil" required>
+        {% for valor, label in perfis.items() %}
+        <option value="{{ valor }}" {% if valor == "supervisor" %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
     <button type="submit">Cadastrar</button>
 </form>
 
 <div class="table-wrap">
-    <table>
+    <table class="mobile-card-table">
         <thead>
             <tr>
                 <th>Nome</th>
                 <th>E-mail</th>
+                <th>Perfil</th>
                 <th>Status</th>
                 <th>Nova senha</th>
                 <th>Salvar</th>
@@ -21,26 +33,45 @@
             </tr>
         </thead>
         <tbody>
-            {% for supervisor in supervisores %}
+            {% for usuario in usuarios %}
             <tr>
-                <form method="post" action="{{ url_for('admin.editar_supervisor', supervisor_id=supervisor.id) }}">
-                    <td><input name="nome" value="{{ supervisor.nome }}" required></td>
-                    <td><input type="email" name="email" value="{{ supervisor.email }}" required></td>
-                    <td>
-                        <label class="check">
-                            <input type="checkbox" name="ativo" {% if supervisor.ativo %}checked{% endif %}>
-                            {% if supervisor.ativo %}Ativo{% else %}Inativo{% endif %}
-                        </label>
+                <form method="post" action="{{ url_for('admin.editar_supervisor', supervisor_id=usuario.id) }}">
+                    <td data-label="Nome"><input name="nome" value="{{ usuario.nome }}" required></td>
+                    <td data-label="E-mail"><input type="email" name="email" value="{{ usuario.email }}" required></td>
+                    <td data-label="Perfil">
+                        <select name="perfil" {% if usuario.id == current_user.id %}disabled{% endif %}>
+                            {% for valor, label in perfis.items() %}
+                            <option value="{{ valor }}" {% if usuario.perfil == valor %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if usuario.id == current_user.id %}
+                        <input type="hidden" name="perfil" value="{{ usuario.perfil }}">
+                        {% endif %}
                     </td>
-                    <td><input type="password" name="senha" placeholder="Manter senha"></td>
-                    <td><button type="submit">Salvar</button></td>
+                    <td data-label="Status">
+                        <label class="check">
+                            <input type="checkbox" name="ativo" {% if usuario.ativo %}checked{% endif %} {% if usuario.id == current_user.id %}disabled{% endif %}>
+                            {% if usuario.ativo %}Ativo{% else %}Inativo{% endif %}
+                        </label>
+                        {% if usuario.id == current_user.id %}
+                        <input type="hidden" name="ativo" value="on">
+                        {% endif %}
+                    </td>
+                    <td data-label="Nova senha"><input type="password" name="senha" placeholder="Manter senha"></td>
+                    <td data-label="Salvar"><button type="submit">Salvar</button></td>
                 </form>
-                <td>
-                    <form method="post" action="{{ url_for('admin.excluir_supervisor', supervisor_id=supervisor.id) }}" onsubmit="return confirm('Excluir este supervisor? Só será permitido se ele não tiver visitas no histórico.');">
+                <td data-label="Excluir">
+                    {% if usuario.id != current_user.id %}
+                    <form method="post" action="{{ url_for('admin.excluir_supervisor', supervisor_id=usuario.id) }}" onsubmit="return confirm('Excluir este usuario? Se ele tiver visitas no historico, inative em vez de excluir.');">
                         <button type="submit" class="danger-button">Excluir</button>
                     </form>
+                    {% else %}
+                    <span class="muted">Usuario atual</span>
+                    {% endif %}
                 </td>
             </tr>
+            {% else %}
+            <tr><td colspan="7">Nenhum usuario cadastrado.</td></tr>
             {% endfor %}
         </tbody>
     </table>
