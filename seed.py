@@ -2,7 +2,16 @@ import os
 
 from app import create_app
 from app.extensions import db
-from app.models import BALANCO_ITENS_FIXOS, ChecklistItem, CorredorLoja, Loja, SupervisorLoja, Usuario
+from app.models import (
+    BALANCO_ITENS_FIXOS,
+    PERMISSOES_POR_PERFIL,
+    ChecklistItem,
+    CorredorLoja,
+    Loja,
+    SupervisorLoja,
+    Usuario,
+    UsuarioPermissao,
+)
 from sqlalchemy import inspect, text
 
 
@@ -49,6 +58,15 @@ def get_or_create_usuario(nome, email, senha, perfil):
         usuario.set_password(senha)
         db.session.add(usuario)
     return usuario
+
+
+def sincronizar_permissoes_padrao(usuario):
+    if usuario.is_admin:
+        return
+    if usuario.permissoes:
+        return
+    for permissao in PERMISSOES_POR_PERFIL.get(usuario.perfil, set()):
+        db.session.add(UsuarioPermissao(usuario=usuario, permissao=permissao))
 
 
 def ensure_schema():
@@ -103,6 +121,13 @@ def seed():
 
         admin = get_or_create_usuario(admin_nome, admin_email, admin_senha, "admin")
         admin.ativo = True
+        db.session.commit()
+
+        Usuario.query.filter_by(perfil="gestor").update({"perfil": "operador"})
+        db.session.commit()
+
+        for usuario in Usuario.query.all():
+            sincronizar_permissoes_padrao(usuario)
         db.session.commit()
 
         lojas_por_nome = {}
