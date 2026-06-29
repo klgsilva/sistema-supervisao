@@ -29,8 +29,13 @@ bp = Blueprint("main", __name__)
 EXTENSOES_IMAGEM = {"png", "jpg", "jpeg", "webp"}
 
 
+def require_permission(permissao):
+    if not current_user.can_access(permissao):
+        abort(403)
+
+
 def lojas_da_visao():
-    if current_user.is_admin:
+    if current_user.can_view_all_stores:
         return Loja.query.filter_by(ativa=True).order_by(Loja.nome).all()
     return (
         Loja.query.join(SupervisorLoja)
@@ -41,7 +46,7 @@ def lojas_da_visao():
 
 
 def lojas_do_relatorio(supervisor_id=None):
-    if current_user.is_admin and supervisor_id:
+    if current_user.can_view_all_stores and supervisor_id:
         return (
             Loja.query.join(SupervisorLoja)
             .filter(SupervisorLoja.supervisor_id == supervisor_id, Loja.ativa.is_(True))
@@ -247,11 +252,14 @@ def salvar_foto_manutencao(arquivo):
 @bp.route("/")
 @login_required
 def dashboard():
+    if not current_user.can_access("dashboard"):
+        return redirect(url_for("main.relatorios"))
+
     hoje = date.today()
 
     lojas = lojas_da_visao()
 
-    if current_user.is_admin:
+    if current_user.can_view_all_stores:
         visitas_hoje = Visita.query.filter_by(data_visita=hoje).all()
         ocorrencias = (
             Ocorrencia.query.filter(Ocorrencia.status.in_(["aberta", "em_andamento"]))
@@ -290,12 +298,14 @@ def manual():
 @bp.route("/financeiro")
 @login_required
 def financeiro():
+    require_permission("financeiro")
     return render_template("main/financeiro.html")
 
 
 @bp.route("/manutencoes")
 @login_required
 def manutencoes():
+    require_permission("manutencoes")
     lojas = lojas_da_visao()
     lojas_ids = [loja.id for loja in lojas]
     loja_id = None if current_user.is_admin else request.args.get("loja_id", type=int)
@@ -373,7 +383,7 @@ def manutencoes():
 @bp.route("/manutencoes", methods=["POST"])
 @login_required
 def criar_manutencao():
-    if current_user.is_admin:
+    if not current_user.can_access("criar_manutencao"):
         abort(403)
 
     loja_id = request.form.get("loja_id", type=int)
@@ -445,6 +455,7 @@ def criar_manutencao():
 @bp.route("/manutencoes/<int:manutencao_id>/status", methods=["POST"])
 @login_required
 def atualizar_status_manutencao(manutencao_id):
+    require_permission("atualizar_manutencao")
     manutencao = db.session.get(Manutencao, manutencao_id)
     if not manutencao or not get_loja_visivel(manutencao.loja_id):
         abort(404)
@@ -483,15 +494,20 @@ def atualizar_status_manutencao(manutencao_id):
 @bp.route("/relatorios")
 @login_required
 def relatorios():
+    require_permission("relatorios")
     filtros = intervalo_relatorio(request.args)
     ciclo, ciclos_balanco = ciclo_do_relatorio(request.args)
     inicio = filtros["inicio"]
     fim = filtros["fim"]
     mes_referencia = ciclo.competencia_mes if ciclo else filtros["mes_referencia"]
-    supervisor_id = request.args.get("supervisor_id", type=int) if current_user.is_admin else current_user.id
+    supervisor_id = request.args.get("supervisor_id", type=int) if current_user.can_view_all_stores else current_user.id
     lojas = lojas_do_relatorio(supervisor_id)
     lojas_ids = [loja.id for loja in lojas]
-    supervisores = Usuario.query.filter_by(perfil="supervisor", ativo=True).order_by(Usuario.nome).all()
+    supervisores = (
+        Usuario.query.filter(Usuario.perfil.in_(["supervisor", "operador"]), Usuario.ativo.is_(True))
+        .order_by(Usuario.nome)
+        .all()
+    )
 
     visitas_query = Visita.query.filter(Visita.data_visita >= inicio, Visita.data_visita < fim)
     if supervisor_id:
@@ -603,16 +619,23 @@ def relatorios():
 @bp.route("/balancos")
 @login_required
 def balancos():
+    require_permission("balancos")
     filtros = intervalo_relatorio(request.args)
     ciclo, ciclos_balanco = ciclo_do_relatorio(request.args)
     mes_referencia = ciclo.competencia_mes if ciclo else filtros["mes_referencia"]
-    supervisor_id = request.args.get("supervisor_id", type=int) if current_user.is_admin else current_user.id
+    supervisor_id = request.args.get("supervisor_id", type=int) if current_user.can_view_all_stores else current_user.id
     lojas = lojas_do_relatorio(supervisor_id)
     lojas_ids = [loja.id for loja in lojas]
     balanco_loja_id = request.args.get("balanco_loja_id", type=int)
     if balanco_loja_id not in lojas_ids:
         balanco_loja_id = None
-    supervisores = Usuario.query.filter_by(perfil="supervisor", ativo=True).order_by(Usuario.nome).all()
+    if not current_user.can_access("lancar_balanco") and not current_user.can_access("revisar_balanco"):
+        balanco_loja_id = None
+    supervisores = (
+        Usuario.query.filter(Usuario.perfil.in_(["supervisor", "operador"]), Usuario.ativo.is_(True))
+        .order_by(Usuario.nome)
+        .all()
+    )
 
     mes_passado = mes_anterior(mes_referencia)
     balancos_query = BalancoMensal.query.filter(BalancoMensal.loja_id.in_(lojas_ids))
@@ -685,11 +708,11 @@ def balancos():
         resumo_lojas=resumo_lojas,
         resumo_lancamento=[item for item in resumo_lojas if item["loja"].id == balanco_loja_id] if balanco_loja_id else [],
         pode_salvar_lancamento=(
-            current_user.is_admin
+            current_user.can_access("revisar_balanco")
             or any(
                 item["loja"].id == balanco_loja_id and item["tem_corredor_pendente"]
                 for item in resumo_lojas
-            )
+            ) and current_user.can_access("lancar_balanco")
         ),
         total_balanco=sum((item["valor_balanco"] for item in resumo_lojas), Decimal("0.00")),
         total_lancados=sum(1 for item in resumo_lojas if item["balanco_lancado"]),
@@ -778,6 +801,9 @@ def excluir_corredor_balanco(corredor_id):
 @bp.route("/balancos/salvar", methods=["POST"])
 @login_required
 def salvar_balancos():
+    if not current_user.can_access("lancar_balanco") and not current_user.can_access("revisar_balanco"):
+        abort(403)
+
     ciclo_id = request.form.get("ciclo_id", type=int)
     ciclo = db.session.get(CicloBalanco, ciclo_id) if ciclo_id else None
     if not ciclo:
@@ -881,7 +907,7 @@ def salvar_balancos():
 @bp.route("/balancos/ciclos", methods=["POST"])
 @login_required
 def criar_ciclo_balanco():
-    if not current_user.is_admin:
+    if not current_user.can_access("liberar_balanco"):
         abort(403)
 
     competencia_raw = request.form.get("competencia_mes", "")
@@ -909,7 +935,7 @@ def criar_ciclo_balanco():
 @bp.route("/balancos/ciclos/<int:ciclo_id>/status", methods=["POST"])
 @login_required
 def atualizar_status_ciclo_balanco(ciclo_id):
-    if not current_user.is_admin:
+    if not current_user.can_access("liberar_balanco"):
         abort(403)
 
     ciclo = db.session.get(CicloBalanco, ciclo_id)
@@ -932,12 +958,13 @@ def atualizar_status_ciclo_balanco(ciclo_id):
 @bp.route("/relatorios/exportar")
 @login_required
 def exportar_relatorio():
+    require_permission("relatorios")
     filtros = intervalo_relatorio(request.args)
     ciclo, _ = ciclo_do_relatorio(request.args)
     inicio = filtros["inicio"]
     fim = filtros["fim"]
     mes_referencia = ciclo.competencia_mes if ciclo else filtros["mes_referencia"]
-    supervisor_id = request.args.get("supervisor_id", type=int) if current_user.is_admin else current_user.id
+    supervisor_id = request.args.get("supervisor_id", type=int) if current_user.can_view_all_stores else current_user.id
     lojas = lojas_do_relatorio(supervisor_id)
     lojas_ids = [loja.id for loja in lojas]
 
