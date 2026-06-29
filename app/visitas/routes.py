@@ -97,7 +97,7 @@ def lojas_pendentes_hoje():
 
 
 def supervisor_pode_loja(supervisor_id, loja_id):
-    if current_user.is_admin:
+    if current_user.can_view_all_stores:
         return True
     return (
         SupervisorLoja.query.filter_by(supervisor_id=supervisor_id, loja_id=loja_id).first()
@@ -133,7 +133,7 @@ def ocorrencias_ativas_por_loja(lojas):
 @bp.route("/nova", methods=["GET", "POST"])
 @login_required
 def nova():
-    if current_user.is_admin:
+    if not current_user.can_access("nova_visita"):
         abort(403)
 
     lojas = lojas_pendentes_hoje()
@@ -282,7 +282,7 @@ def nova():
 @login_required
 def detalhe(visita_id):
     visita = db.get_or_404(Visita, visita_id)
-    if not current_user.is_admin and visita.supervisor_id != current_user.id:
+    if not current_user.can_view_all_stores and visita.supervisor_id != current_user.id:
         abort(403)
     return render_template("visitas/detalhe.html", visita=visita)
 
@@ -291,7 +291,7 @@ def detalhe(visita_id):
 @login_required
 def historico_loja(loja_id):
     loja = db.get_or_404(Loja, loja_id)
-    if not current_user.is_admin and not supervisor_pode_loja(current_user.id, loja_id):
+    if not current_user.can_view_all_stores and not supervisor_pode_loja(current_user.id, loja_id):
         abort(403)
     visitas = (
         Visita.query.filter_by(loja_id=loja_id)
@@ -304,8 +304,10 @@ def historico_loja(loja_id):
 @bp.route("/ocorrencias")
 @login_required
 def ocorrencias():
+    if not current_user.can_access("ocorrencias"):
+        abort(403)
     query = Ocorrencia.query.join(Loja)
-    if not current_user.is_admin:
+    if not current_user.can_view_all_stores:
         lojas_ids = [item.loja_id for item in SupervisorLoja.query.filter_by(supervisor_id=current_user.id)]
         query = query.filter(Loja.id.in_(lojas_ids))
     ocorrencias_lista = query.order_by(Ocorrencia.status, Ocorrencia.data_abertura.desc()).all()
@@ -315,8 +317,10 @@ def ocorrencias():
 @bp.route("/ocorrencias/<int:ocorrencia_id>/status", methods=["POST"])
 @login_required
 def atualizar_status_ocorrencia(ocorrencia_id):
+    if not current_user.can_access("ocorrencias"):
+        abort(403)
     ocorrencia = db.get_or_404(Ocorrencia, ocorrencia_id)
-    if not current_user.is_admin and not supervisor_pode_loja(current_user.id, ocorrencia.loja_id):
+    if not current_user.can_view_all_stores and not supervisor_pode_loja(current_user.id, ocorrencia.loja_id):
         abort(403)
     status = request.form.get("status")
     if status not in STATUS_OCORRENCIA:
