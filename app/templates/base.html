@@ -122,6 +122,12 @@
     {% if current_user.is_authenticated %}
     </div>
     {% endif %}
+    <div class="page-loader" data-page-loader aria-live="polite" aria-hidden="true">
+        <div class="page-loader-card">
+            <span class="page-loader-spinner" aria-hidden="true"></span>
+            <span>Carregando...</span>
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
