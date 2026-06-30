@@ -10,6 +10,7 @@ if database_url and database_url.startswith("postgres://"):
 
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "troque-esta-chave-em-producao")
+    TIMEZONE = os.environ.get("TIMEZONE", "America/Manaus")
     SQLALCHEMY_DATABASE_URI = database_url or "sqlite:///" + os.path.join(BASE_DIR, "instance", "supervisao.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = os.environ.get(
