@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from app.extensions import db
 from app.models import (
+    Auditoria,
     BALANCO_ITENS_FIXOS,
     PERFIS_USUARIO,
     PERMISSOES_POR_PERFIL,
@@ -19,6 +20,18 @@ from app.models import (
 
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+def registrar_auditoria(acao, entidade=None, entidade_id=None, descricao=None):
+    db.session.add(
+        Auditoria(
+            usuario_id=current_user.id if current_user.is_authenticated else None,
+            acao=acao,
+            entidade=entidade,
+            entidade_id=entidade_id,
+            descricao=descricao,
+        )
+    )
 
 
 def permissoes_disponiveis():
@@ -74,6 +87,7 @@ def lojas():
         db.session.add(loja)
         db.session.flush()
         criar_itens_fixos_balanco(loja)
+        registrar_auditoria("Cadastrou loja", "Loja", loja.id, loja.nome)
         db.session.commit()
         flash("Loja cadastrada.", "success")
         return redirect(url_for("admin.lojas"))
@@ -106,6 +120,7 @@ def editar_loja(loja_id):
     loja.nome = request.form["nome"].strip()
     loja.codigo = request.form["codigo"].strip().upper()
     loja.ativa = bool(request.form.get("ativa"))
+    registrar_auditoria("Atualizou loja", "Loja", loja.id, loja.nome)
     db.session.commit()
     flash("Loja atualizada.", "success")
     return redirect(url_for("admin.lojas"))
@@ -128,6 +143,7 @@ def supervisores():
         db.session.add(usuario)
         db.session.flush()
         aplicar_permissoes_padrao(usuario)
+        registrar_auditoria("Cadastrou usuario", "Usuario", usuario.id, f"{usuario.nome} - {usuario.perfil_label}")
         db.session.commit()
         flash("Usuario cadastrado.", "success")
         return redirect(url_for("admin.supervisores"))
@@ -160,6 +176,7 @@ def editar_supervisor(supervisor_id):
         if perfil_anterior != perfil:
             UsuarioPermissao.query.filter_by(usuario_id=usuario.id).delete()
             aplicar_permissoes_padrao(usuario)
+    registrar_auditoria("Atualizou usuario", "Usuario", usuario.id, f"{usuario.nome} - {usuario.perfil_label}")
     db.session.commit()
     flash("Usuario atualizado.", "success")
     return redirect(url_for("admin.supervisores"))
@@ -176,6 +193,7 @@ def excluir_supervisor(supervisor_id):
         return redirect(url_for("admin.supervisores"))
 
     SupervisorLoja.query.filter_by(supervisor_id=usuario.id).delete()
+    registrar_auditoria("Excluiu usuario", "Usuario", usuario.id, usuario.nome)
     db.session.delete(usuario)
     db.session.commit()
     flash("Usuario excluido.", "success")
@@ -211,6 +229,12 @@ def vinculos():
         UsuarioPermissao.query.filter_by(usuario_id=supervisor_id).delete()
         for permissao in permissoes:
             db.session.add(UsuarioPermissao(usuario_id=supervisor_id, permissao=permissao))
+        registrar_auditoria(
+            "Atualizou vinculos",
+            "Usuario",
+            usuario.id,
+            f"{usuario.nome}: {len(lojas_ids)} lojas, {len(permissoes)} permissoes",
+        )
         db.session.commit()
         flash("Vinculos atualizados.", "success")
         return redirect(url_for("admin.vinculos", supervisor_id=supervisor_id))
@@ -254,6 +278,8 @@ def checklist():
             ativo=bool(request.form.get("ativo")),
         )
         db.session.add(item)
+        db.session.flush()
+        registrar_auditoria("Cadastrou checklist", "ChecklistItem", item.id, f"{item.setor} - {item.descricao}")
         db.session.commit()
         flash("Item cadastrado.", "success")
         return redirect(url_for("admin.checklist"))
@@ -269,6 +295,7 @@ def editar_checklist(item_id):
     item.setor = request.form["setor"].strip()
     item.descricao = request.form["descricao"].strip()
     item.ativo = bool(request.form.get("ativo"))
+    registrar_auditoria("Atualizou checklist", "ChecklistItem", item.id, f"{item.setor} - {item.descricao}")
     db.session.commit()
     flash("Item atualizado.", "success")
     return redirect(url_for("admin.checklist"))
