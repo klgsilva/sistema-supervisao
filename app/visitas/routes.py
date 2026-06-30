@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.models import ChecklistItem, Loja, Ocorrencia, RespostaChecklist, SupervisorLoja, Usuario, Visita
+from app.models import Auditoria, ChecklistItem, Loja, Ocorrencia, RespostaChecklist, SupervisorLoja, Usuario, Visita
 
 
 bp = Blueprint("visitas", __name__, url_prefix="/visitas")
@@ -22,6 +22,18 @@ ITENS_TEXTO_LIVRE = (
 )
 AVARIA_PERGUNTA_PREFIXO = "verificar se existem avarias"
 AVARIA_DETALHE_TERMOS = ("informar", "produtos", "avariados")
+
+
+def registrar_auditoria(acao, entidade=None, entidade_id=None, descricao=None):
+    db.session.add(
+        Auditoria(
+            usuario_id=current_user.id if current_user.is_authenticated else None,
+            acao=acao,
+            entidade=entidade,
+            entidade_id=entidade_id,
+            descricao=descricao,
+        )
+    )
 
 
 def parse_reais(valor):
@@ -262,10 +274,24 @@ def nova():
             novo_status = request.form.get(f"ocorrencia_status_{ocorrencia_id}", ocorrencia.status)
             if novo_status not in {"aberta", "em_andamento", "resolvida", "cancelada"}:
                 continue
+            status_anterior = ocorrencia.status
             ocorrencia.status = novo_status
             ocorrencia.data_fechamento = datetime.utcnow() if novo_status in {"resolvida", "cancelada"} else None
+            if status_anterior != novo_status:
+                registrar_auditoria(
+                    "Atualizou ocorrencia na visita",
+                    "Ocorrencia",
+                    ocorrencia.id,
+                    f"{ocorrencia.loja.nome}: {status_anterior} -> {novo_status}",
+                )
 
         try:
+            registrar_auditoria(
+                "Registrou visita",
+                "Visita",
+                visita.id,
+                f"{visita.loja.nome} - venda {visita.venda_dia}",
+            )
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
@@ -325,8 +351,15 @@ def atualizar_status_ocorrencia(ocorrencia_id):
     status = request.form.get("status")
     if status not in STATUS_OCORRENCIA:
         abort(400)
+    status_anterior = ocorrencia.status
     ocorrencia.status = status
     ocorrencia.data_fechamento = datetime.utcnow() if status in {"resolvida", "cancelada"} else None
+    registrar_auditoria(
+        "Atualizou ocorrencia",
+        "Ocorrencia",
+        ocorrencia.id,
+        f"{ocorrencia.loja.nome}: {status_anterior} -> {status}",
+    )
     db.session.commit()
     flash("Status da ocorrência atualizado.", "success")
     return redirect(request.referrer or url_for("visitas.ocorrencias"))
