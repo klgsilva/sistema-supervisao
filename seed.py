@@ -107,6 +107,11 @@ def ensure_schema():
         if "foto_path" not in colunas:
             db.session.execute(text("ALTER TABLE manutencao ADD COLUMN foto_path VARCHAR(255)"))
             db.session.commit()
+    if "financeiro_gasto" in inspector.get_table_names():
+        colunas = {coluna["name"] for coluna in inspector.get_columns("financeiro_gasto")}
+        if "manutencao_id" not in colunas:
+            db.session.execute(text("ALTER TABLE financeiro_gasto ADD COLUMN manutencao_id INTEGER"))
+            db.session.commit()
 
 
 def seed():
