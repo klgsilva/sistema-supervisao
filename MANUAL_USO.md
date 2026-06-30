@@ -16,6 +16,8 @@ Importante: para supervisor (a) e operador (a), o acesso real nao fica preso ao 
 
 Exemplo: se um operador precisar ver Relatorios, o administrador marca a caixa **Relatorios** para ele. Se nao marcar Financeiro, ele nao acessa Financeiro.
 
+O menu lateral muda conforme as permissoes do usuario. No computador ele pode ser recolhido para mostrar apenas icones. No celular ele abre como gaveta lateral e fecha ao tocar fora ou ao escolher uma opcao.
+
 ## Fluxo geral
 
 1. O administrador cadastra lojas, corredores, usuarios e checklist.
@@ -56,6 +58,8 @@ Nesta tela o administrador escolhe um usuario e marca:
 - Financeiro.
 
 Se a caixa estiver marcada, o usuario ve e acessa a funcao. Se estiver desmarcada, a funcao nao aparece no menu e tambem fica bloqueada por URL direta.
+
+Nao existe permissao fixa por nome do perfil, exceto o administrador que ve tudo. Supervisor (a) e operador (a) recebem acesso pelas caixas marcadas em Vinculos.
 
 ## Lojas
 
@@ -153,6 +157,10 @@ Categorias:
 
 Manutencao pendente ou em andamento de dias anteriores aparece como alerta.
 
+Quando a manutencao tiver custo maior que zero, o sistema cria automaticamente um gasto no Financeiro com status **pendente**. Assim o usuario nao precisa lancar o mesmo valor duas vezes. O administrador analisa no Financeiro e aprova ou reprova.
+
+Se o custo da manutencao for alterado depois, o gasto financeiro vinculado tambem e atualizado. Quando necessario, ele volta para status pendente para nova analise do administrador.
+
 ## Balancos
 
 Menu: **Balancos**
@@ -197,11 +205,43 @@ Administrador pode ver tudo. Outros usuarios veem apenas lojas vinculadas e some
 
 Menu: **Financeiro**
 
-Modulo reservado para futuras atualizacoes.
+Modulo usado para controlar limites e gastos urgentes por loja.
 
-Mensagem exibida:
+O administrador pode:
 
-**Parte financeira em atualizacao. Aguarde novas atualizacoes.**
+- definir limite mensal por loja;
+- escolher uma loja no filtro para visualizar e analisar os gastos daquela loja;
+- acompanhar gastos pendentes;
+- aprovar ou reprovar gastos;
+- ver saldo disponivel por loja.
+
+Usuario com permissao de Financeiro pode:
+
+- lancar gasto da loja vinculada;
+- informar data, valor, categoria e descricao;
+- anexar comprovante opcional;
+- acompanhar se o gasto esta pendente, aprovado ou reprovado.
+
+Gastos com origem em manutencao aparecem automaticamente no Financeiro quando a manutencao tem custo informado.
+
+Para evitar tela cheia demais, a lista **Gastos do mes** fica em branco ate escolher uma loja no filtro. Isso vale para administrador, supervisor (a) e operador (a).
+
+O saldo considera o limite menos os gastos aprovados. Gastos pendentes aparecem separados para analise.
+
+## Painel e auditoria
+
+Menu: **Painel**
+
+O painel mostra a visao do dia:
+
+- lojas visitadas hoje;
+- lojas pendentes;
+- ocorrencias ativas;
+- alertas de ocorrencias antigas;
+- manutencoes atrasadas;
+- pendencias de balanco aberto.
+
+Para o administrador, o painel tambem mostra auditoria recente com as ultimas acoes feitas no sistema.
 
 ## Regras importantes
 
@@ -213,3 +253,5 @@ Mensagem exibida:
 - Checklist NOK exige comentario.
 - Checklist NOK cria ocorrencia automaticamente.
 - Balanco so aceita lancamento quando esta aberto.
+- Gasto de manutencao com custo maior que zero entra automaticamente no Financeiro como pendente.
+- No Financeiro, a lista de gastos do mes so aparece depois de escolher uma loja.
