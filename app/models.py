@@ -136,6 +136,18 @@ class UsuarioPermissao(db.Model):
     __table_args__ = (UniqueConstraint("usuario_id", "permissao", name="uq_usuario_permissao"),)
 
 
+class Auditoria(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"))
+    acao = db.Column(db.String(120), nullable=False)
+    entidade = db.Column(db.String(80))
+    entidade_id = db.Column(db.Integer)
+    descricao = db.Column(db.Text)
+    data_hora = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    usuario = db.relationship("Usuario")
+
+
 class SupervisorLoja(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supervisor_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False)
@@ -223,6 +235,45 @@ class Manutencao(db.Model):
 
     loja = db.relationship("Loja", back_populates="manutencoes")
     usuario = db.relationship("Usuario")
+    gasto_financeiro = db.relationship("FinanceiroGasto", back_populates="manutencao", uselist=False)
+
+
+class FinanceiroLimite(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    loja_id = db.Column(db.Integer, db.ForeignKey("loja.id"), nullable=False)
+    mes_referencia = db.Column(db.Date, nullable=False)
+    valor_limite = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    observacao = db.Column(db.Text)
+    data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    loja = db.relationship("Loja")
+
+    __table_args__ = (UniqueConstraint("loja_id", "mes_referencia", name="uq_financeiro_limite_loja_mes"),)
+
+
+class FinanceiroGasto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    loja_id = db.Column(db.Integer, db.ForeignKey("loja.id"), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False)
+    manutencao_id = db.Column(db.Integer, db.ForeignKey("manutencao.id"))
+    mes_referencia = db.Column(db.Date, nullable=False)
+    data_gasto = db.Column(db.Date, nullable=False, default=date.today)
+    descricao = db.Column(db.String(255), nullable=False)
+    categoria = db.Column(db.String(80), nullable=False, default="urgente")
+    valor = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    status = db.Column(db.String(30), nullable=False, default="pendente")
+    comprovante_path = db.Column(db.String(255))
+    observacao = db.Column(db.Text)
+    analisado_por_id = db.Column(db.Integer, db.ForeignKey("usuario.id"))
+    data_analise = db.Column(db.DateTime)
+    observacao_analise = db.Column(db.Text)
+    data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    loja = db.relationship("Loja")
+    usuario = db.relationship("Usuario", foreign_keys=[usuario_id])
+    analisado_por = db.relationship("Usuario", foreign_keys=[analisado_por_id])
+    manutencao = db.relationship("Manutencao", back_populates="gasto_financeiro")
 
 
 class CicloBalanco(db.Model):
