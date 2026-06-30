@@ -68,6 +68,8 @@
             <li><strong>Manutencoes:</strong> visualizar e analisar registros das lojas. Administrador nao registra manutencao.</li>
             <li><strong>Balancos:</strong> liberar balanco, fechar ciclo e lancar valores revisados quando necessario.</li>
             <li><strong>Relatorios:</strong> filtrar por dia, mes, periodo e usuario.</li>
+            <li><strong>Financeiro:</strong> definir limite mensal, analisar gastos por loja e aprovar ou reprovar lancamentos.</li>
+            <li><strong>Auditoria:</strong> acompanhar no painel as ultimas acoes feitas no sistema.</li>
         </ul>
     </div>
     <div>
@@ -77,7 +79,8 @@
             <li><strong>Nova visita:</strong> escolher uma loja pendente do dia e registrar a visita, se liberado.</li>
             <li><strong>Manutencoes:</strong> registrar problema, categoria, status, custo e foto opcional, se liberado.</li>
             <li><strong>Balancos:</strong> lancar valores por corredor quando o balanco estiver aberto, se liberado.</li>
-            <li><strong>Relatorios e Financeiro:</strong> aparecem somente quando o administrador marcar essas permissoes no vinculo.</li>
+            <li><strong>Relatorios:</strong> consultar informacoes das lojas vinculadas, se liberado.</li>
+            <li><strong>Financeiro:</strong> lancar gastos urgentes e acompanhar gastos das lojas vinculadas, se liberado.</li>
         </ul>
     </div>
 </section>
@@ -115,7 +118,8 @@
         <li>Administrador visualiza, filtra e analisa. Administrador nao da entrada em manutencao.</li>
         <li>Use <strong>Refrigeracao / Camara fria</strong> para equipamentos terceirizados e controle semanal.</li>
         <li>Use <strong>Manutencao padrao</strong> para eletrica, computadores, estrutura e itens internos.</li>
-        <li>O campo custo serve para registrar gasto com material ou servico.</li>
+        <li>Quando o campo custo for maior que zero, o sistema cria automaticamente um gasto pendente no Financeiro.</li>
+        <li>Se o custo da manutencao for alterado depois, o gasto financeiro vinculado tambem e atualizado e volta para analise quando necessario.</li>
         <li>Manutencao pendente ou em andamento de dias anteriores aparece como alerta ao escolher a loja.</li>
     </ul>
 </section>
@@ -136,9 +140,15 @@
 <section>
     <h2>Financeiro</h2>
     <ul class="manual-list">
-        <li>O menu Financeiro ja esta disponivel, mas ainda nao possui lancamentos financeiros ativos.</li>
-        <li>Ao acessar, o sistema mostra a mensagem: "Parte financeira em atualizacao. Aguarde novas atualizacoes."</li>
-        <li>Esse modulo foi reservado para controle futuro de limites, gastos urgentes, aprovacoes e relatorios financeiros por loja.</li>
+        <li>Administrador define o limite mensal de cada loja.</li>
+        <li>Administrador escolhe uma loja no filtro para visualizar e analisar os gastos daquela loja.</li>
+        <li>Supervisor (a) e operador (a) tambem precisam escolher uma loja no filtro para visualizar os gastos do mes.</li>
+        <li>Usuario com permissao de Financeiro pode lancar gastos urgentes da loja vinculada.</li>
+        <li>Gastos com origem em manutencao aparecem automaticamente quando a manutencao tem custo informado.</li>
+        <li>Todo gasto entra como pendente ate o administrador aprovar ou reprovar.</li>
+        <li>O sistema mostra limite, gastos aprovados, gastos pendentes e saldo disponivel por loja.</li>
+        <li>Comprovante em foto e opcional no lancamento do gasto.</li>
+        <li>O saldo disponivel considera o limite menos os gastos aprovados. Gastos pendentes aparecem separados para analise.</li>
     </ul>
 </section>
 
@@ -149,6 +159,7 @@
         <li><strong>Visitas por usuario:</strong> mostra quais lojas foram visitadas por cada supervisor (a) ou operador (a).</li>
         <li><strong>Balanco e comparacao:</strong> compara valor fechado, revisado e mes anterior.</li>
         <li>Administrador pode filtrar por usuario. Outros usuarios veem apenas as lojas vinculadas.</li>
+        <li>Os relatorios podem ser exportados quando a opcao estiver disponivel na tela.</li>
     </ul>
 </section>
 
@@ -163,6 +174,8 @@
         <li>Checklist NOK exige comentario e cria ocorrencia.</li>
         <li>Avarias marcadas como Sim exigem informar quais produtos estao avariados.</li>
         <li>Balanco so aceita lancamento quando esta aberto.</li>
+        <li>Gasto de manutencao com custo maior que zero entra automaticamente no Financeiro como pendente.</li>
+        <li>No Financeiro, a lista de gastos do mes so aparece apos escolher uma loja no filtro.</li>
     </ul>
 </section>
 {% endblock %}

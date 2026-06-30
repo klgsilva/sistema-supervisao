@@ -3,12 +3,211 @@
 <div class="page-head">
     <div>
         <h1>Financeiro</h1>
-        <p>Controle financeiro das lojas.</p>
+        <p>Controle de limites, gastos urgentes e saldo por loja.</p>
     </div>
+    <form method="get" class="filter-form">
+        <label>
+            Mes
+            <input type="month" name="mes" value="{{ mes_valor }}">
+        </label>
+        <label>
+            Loja
+            <select name="loja_id">
+                <option value="">Escolha uma loja</option>
+                {% for loja in lojas %}
+                <option value="{{ loja.id }}" {% if loja.id == loja_id_filtro %}selected{% endif %}>{{ loja.nome }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Filtrar</button>
+    </form>
 </div>
 
-<section class="coming-soon">
-    <strong>Parte financeira em atualização</strong>
-    <p>Aguarde novas atualizações.</p>
+<section class="stats-grid">
+    <div class="stat-card">
+        <span>Limite do mes</span>
+        <strong>{{ total_limite|brl }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Gastos aprovados</span>
+        <strong>{{ total_aprovado|brl }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Pendentes</span>
+        <strong>{{ total_pendente|brl }}</strong>
+    </div>
+    <div class="stat-card">
+        <span>Saldo disponivel</span>
+        <strong>{{ total_saldo|brl }}</strong>
+    </div>
+</section>
+
+{% if current_user.is_admin %}
+<section>
+    <h2>Definir limite mensal por loja</h2>
+    <form method="post" action="{{ url_for('main.salvar_limites_financeiros') }}">
+        <input type="hidden" name="mes" value="{{ mes_valor }}">
+        <div class="table-wrap">
+            <table class="mobile-card-table">
+                <thead>
+                    <tr>
+                        <th>Loja</th>
+                        <th>Limite</th>
+                        <th>Observacao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumo_lojas %}
+                    <tr>
+                        <td data-label="Loja">{{ item.loja.nome }}</td>
+                        <td data-label="Limite">
+                            <input name="limite_{{ item.loja.id }}" inputmode="decimal" data-money value="{{ '%.2f'|format(item.valor_limite|float) }}" placeholder="0,00">
+                        </td>
+                        <td data-label="Observacao">
+                            <input name="observacao_{{ item.loja.id }}" value="{{ item.limite.observacao if item.limite and item.limite.observacao else '' }}" placeholder="Opcional">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit">Salvar limites</button>
+    </form>
+</section>
+{% endif %}
+
+{% if not current_user.is_admin %}
+<section>
+    <h2>Lancar gasto</h2>
+    <form method="post" action="{{ url_for('main.criar_gasto_financeiro') }}" class="form-card" enctype="multipart/form-data">
+        <div class="grid three">
+            <label>
+                Loja
+                <select name="loja_id" required>
+                    <option value="">Selecione uma loja</option>
+                    {% for loja in lojas %}
+                    <option value="{{ loja.id }}">{{ loja.nome }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Data
+                <input type="date" name="data_gasto" required>
+            </label>
+            <label>
+                Valor
+                <input name="valor" inputmode="decimal" data-money placeholder="0,00" required>
+            </label>
+        </div>
+        <div class="grid two">
+            <label>
+                Categoria
+                <select name="categoria">
+                    <option value="urgente">Urgente</option>
+                    <option value="material">Material</option>
+                    <option value="servico">Servico</option>
+                    <option value="manutencao">Manutencao</option>
+                    <option value="outros">Outros</option>
+                </select>
+            </label>
+            <label>
+                Descricao
+                <input name="descricao" placeholder="Ex: compra de tomada, lampada, parafuso" required>
+            </label>
+        </div>
+        <label>
+            Observacao
+            <textarea name="observacao" rows="3" placeholder="Detalhe o motivo do gasto"></textarea>
+        </label>
+        <label>
+            Comprovante opcional
+            <input type="file" name="comprovante" accept="image/*">
+        </label>
+        <button type="submit">Enviar para analise</button>
+    </form>
+</section>
+{% endif %}
+
+<section>
+    <h2>Resumo por loja</h2>
+    <div class="finance-store-grid">
+        {% for item in resumo_lojas %}
+        <div class="finance-store-card">
+            <div>
+                <h3>{{ item.loja.nome }}</h3>
+                <small>Saldo: {{ item.saldo|brl }}</small>
+            </div>
+            <dl>
+                <div><dt>Limite</dt><dd>{{ item.valor_limite|brl }}</dd></div>
+                <div><dt>Aprovado</dt><dd>{{ item.aprovado|brl }}</dd></div>
+                <div><dt>Pendente</dt><dd>{{ item.pendente|brl }}</dd></div>
+            </dl>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section>
+    <h2>Gastos do mes{% if loja_selecionada %} - {{ loja_selecionada.nome }}{% endif %}</h2>
+    {% if not loja_selecionada %}
+    <p class="empty">Escolha uma loja no filtro para visualizar os gastos do mes.</p>
+    {% else %}
+    <div class="table-wrap">
+        <table class="mobile-card-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Loja</th>
+                    <th>Usuario</th>
+                    <th>Descricao</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Comprovante</th>
+                    {% if current_user.is_admin %}<th>Analise</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for gasto in gastos %}
+                <tr>
+                    <td data-label="Data">{{ gasto.data_gasto.strftime("%d/%m/%Y") }}</td>
+                    <td data-label="Loja">{{ gasto.loja.nome }}</td>
+                    <td data-label="Usuario">{{ gasto.usuario.nome }}</td>
+                    <td data-label="Descricao">
+                        {{ gasto.descricao }}
+                        {% if gasto.manutencao_id %}<br><small>Origem: manutencao #{{ gasto.manutencao_id }}</small>{% endif %}
+                        {% if gasto.observacao %}<br><small>{{ gasto.observacao }}</small>{% endif %}
+                        {% if gasto.observacao_analise %}<br><small>Analise: {{ gasto.observacao_analise }}</small>{% endif %}
+                    </td>
+                    <td data-label="Valor">{{ gasto.valor|brl }}</td>
+                    <td data-label="Status"><span class="badge {{ 'success' if gasto.status == 'aprovado' else 'warning' if gasto.status == 'pendente' else 'danger' }}">{{ gasto.status }}</span></td>
+                    <td data-label="Comprovante">
+                        {% if gasto.comprovante_path %}
+                        <a href="{{ url_for('static', filename=gasto.comprovante_path) }}" target="_blank">Ver</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    {% if current_user.is_admin %}
+                    <td data-label="Analise">
+                        <form method="post" action="{{ url_for('main.atualizar_status_gasto_financeiro', gasto_id=gasto.id) }}" class="status-form">
+                            <input type="hidden" name="loja_id_filtro" value="{{ loja_id_filtro or gasto.loja_id }}">
+                            <select name="status">
+                                <option value="pendente" {% if gasto.status == "pendente" %}selected{% endif %}>Pendente</option>
+                                <option value="aprovado" {% if gasto.status == "aprovado" %}selected{% endif %}>Aprovado</option>
+                                <option value="reprovado" {% if gasto.status == "reprovado" %}selected{% endif %}>Reprovado</option>
+                            </select>
+                            <input name="observacao_analise" value="{{ gasto.observacao_analise or '' }}" placeholder="Observacao">
+                            <button type="submit">Salvar</button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr><td colspan="{{ 8 if current_user.is_admin else 7 }}">Nenhum gasto registrado neste mes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </section>
 {% endblock %}

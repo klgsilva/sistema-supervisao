@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Relatorio para PDF</title>
+    <style>
+        body {
+            color: #091b3a;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 24px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0 0 4px;
+        }
+
+        p {
+            margin: 0 0 16px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #cfd9ea;
+            padding: 6px;
+            text-align: left;
+        }
+
+        th {
+            background: #eef4ff;
+        }
+
+        .actions {
+            margin-bottom: 16px;
+        }
+
+        button {
+            background: #2563eb;
+            border: 0;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 10px 14px;
+        }
+
+        @media print {
+            .actions {
+                display: none;
+            }
+
+            body {
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <button type="button" onclick="window.print()">Salvar em PDF / Imprimir</button>
+    </div>
+    <h1>Relatorio de supervisao</h1>
+    <p>Periodo: {{ periodo_label }} · Gerado em {{ gerado_em.strftime("%d/%m/%Y %H:%M") }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                {% for coluna in cabecalho %}
+                <th>{{ coluna }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in linhas %}
+            <tr>
+                {% for valor in linha %}
+                <td>{{ valor }}</td>
+                {% endfor %}
+            </tr>
+            {% else %}
+            <tr><td colspan="{{ cabecalho|length }}">Nenhum dado encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

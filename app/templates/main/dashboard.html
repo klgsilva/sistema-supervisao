@@ -29,6 +29,70 @@
     </div>
 </section>
 
+{% if current_user.is_admin %}
+<section class="grid two">
+    <div>
+        <h2>Usuarios sem visita hoje</h2>
+        <div class="list">
+            {% for usuario in usuarios_sem_visita %}
+            <div class="list-row">
+                <span>{{ usuario.nome }}</span>
+                <small>{{ usuario.perfil_label }}</small>
+            </div>
+            {% else %}
+            <p class="empty">Todos os usuarios operacionais ja registraram visita hoje.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <h2>Alertas de pendencia</h2>
+        <div class="list">
+            <div class="list-row">
+                <span>Ocorrencias abertas ha mais de 3 dias</span>
+                <strong>{{ ocorrencias_antigas|length }}</strong>
+            </div>
+            <div class="list-row">
+                <span>Manutencoes pendentes de dias anteriores</span>
+                <strong>{{ manutencoes_atrasadas|length }}</strong>
+            </div>
+            <div class="list-row">
+                <span>Lojas pendentes no balanco aberto</span>
+                <strong>{{ balanco_pendente_lojas|length }}</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="grid two">
+    <div>
+        <h2>Manutencoes atrasadas</h2>
+        <div class="list">
+            {% for manutencao in manutencoes_atrasadas[:8] %}
+            <a class="list-row" href="{{ url_for('main.manutencoes', historico_loja_id=manutencao.loja_id, status=manutencao.status, scroll_to='historico') }}">
+                <span>{{ manutencao.loja.nome }} · {{ manutencao.area_equipamento }}</span>
+                <small>{{ manutencao.data_solicitacao.strftime("%d/%m/%Y") }} · {{ manutencao.status }}</small>
+            </a>
+            {% else %}
+            <p class="empty">Nenhuma manutencao atrasada.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <h2>Auditoria recente</h2>
+        <div class="list">
+            {% for log in auditorias_recentes %}
+            <div class="list-row">
+                <span>{{ log.acao }}</span>
+                <small>{{ log.usuario.nome if log.usuario else "Sistema" }} · {{ log.data_hora|datetime_local }}</small>
+            </div>
+            {% else %}
+            <p class="empty">Nenhuma acao registrada ainda.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="grid two">
     <div>
         <h2>Lojas visitadas hoje</h2>
