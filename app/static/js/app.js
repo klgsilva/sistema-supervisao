@@ -86,13 +86,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     if (toggle && menu) {
+        let menuScrollY = 0;
+        const lockPageScroll = () => {
+            menuScrollY = window.scrollY;
+            document.body.classList.add("menu-locked");
+            document.body.style.top = `-${menuScrollY}px`;
+        };
+        const unlockPageScroll = () => {
+            document.body.classList.remove("menu-locked");
+            document.body.style.top = "";
+            window.scrollTo(0, menuScrollY);
+        };
         const closeMenu = () => {
+            if (!menu.classList.contains("open")) {
+                return;
+            }
             menu.classList.remove("open");
             if (menuBackdrop) {
                 menuBackdrop.classList.remove("open");
             }
+            unlockPageScroll();
         };
         const openMenu = () => {
+            if (menu.classList.contains("open")) {
+                return;
+            }
+            lockPageScroll();
             menu.classList.add("open");
             if (menuBackdrop) {
                 menuBackdrop.classList.add("open");
