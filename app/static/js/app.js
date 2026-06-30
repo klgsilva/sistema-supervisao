@@ -9,6 +9,27 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionStorage.removeItem(scrollKey);
     }
 
+    const pageLoader = document.querySelector("[data-page-loader]");
+    let loaderTimer = null;
+    const showPageLoader = () => {
+        if (!pageLoader) {
+            return;
+        }
+        window.clearTimeout(loaderTimer);
+        loaderTimer = window.setTimeout(() => {
+            pageLoader.classList.add("is-active");
+            pageLoader.setAttribute("aria-hidden", "false");
+        }, 180);
+    };
+    const hidePageLoader = () => {
+        window.clearTimeout(loaderTimer);
+        if (pageLoader) {
+            pageLoader.classList.remove("is-active");
+            pageLoader.setAttribute("aria-hidden", "true");
+        }
+    };
+    window.addEventListener("pageshow", hidePageLoader);
+
     const saveScrollPosition = () => {
         sessionStorage.setItem(scrollKey, JSON.stringify({
             path: window.location.pathname,
@@ -19,11 +40,38 @@ document.addEventListener("DOMContentLoaded", () => {
     const nativeFormSubmit = HTMLFormElement.prototype.submit;
     HTMLFormElement.prototype.submit = function submitWithScrollRestore() {
         saveScrollPosition();
+        showPageLoader();
         nativeFormSubmit.call(this);
     };
 
     document.querySelectorAll("form").forEach((form) => {
-        form.addEventListener("submit", saveScrollPosition);
+        form.addEventListener("submit", () => {
+            saveScrollPosition();
+            if (!form.hasAttribute("data-no-loader") && form.target !== "_blank") {
+                showPageLoader();
+            }
+        });
+    });
+
+    document.addEventListener("click", (event) => {
+        const link = event.target.closest("a[href]");
+        if (!link) {
+            return;
+        }
+        const href = link.getAttribute("href") || "";
+        const url = new URL(link.href, window.location.href);
+        const isSamePageAnchor = url.pathname === window.location.pathname
+            && url.search === window.location.search
+            && url.hash;
+        const shouldIgnore = link.target === "_blank"
+            || link.hasAttribute("download")
+            || href.startsWith("#")
+            || href.startsWith("javascript:")
+            || url.origin !== window.location.origin
+            || isSamePageAnchor;
+        if (!shouldIgnore) {
+            showPageLoader();
+        }
     });
 
     if (currentUrl.searchParams.has("corredor_loja_id") || currentUrl.searchParams.has("balanco_loja_id")) {
