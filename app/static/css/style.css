@@ -26,6 +26,14 @@ body {
     min-height: 100vh;
 }
 
+body.menu-locked {
+    left: 0;
+    overflow: hidden;
+    position: fixed;
+    right: 0;
+    width: 100%;
+}
+
 a {
     color: var(--primary);
     text-decoration: none;
@@ -633,6 +641,12 @@ th {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.checkbox-stack {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .tile {
     border: 1px solid var(--line);
     border-radius: 6px;
@@ -951,6 +965,49 @@ th {
     margin: 0;
 }
 
+.finance-store-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.finance-store-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+}
+
+.finance-store-card h3 {
+    margin: 0;
+}
+
+.finance-store-card small {
+    color: var(--muted);
+}
+
+.finance-store-card dl {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.finance-store-card dl div {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+}
+
+.finance-store-card dt {
+    color: var(--muted);
+}
+
+.finance-store-card dd {
+    font-weight: 800;
+    margin: 0;
+}
+
 @media (max-width: 820px) {
     .app-shell {
         display: block;
@@ -960,7 +1017,10 @@ th {
     .sidebar {
         box-shadow: 18px 0 38px rgba(15, 47, 134, 0.22);
         left: 0;
+        max-height: 100dvh;
         max-width: 82vw;
+        min-height: 100dvh;
+        overscroll-behavior: contain;
         overflow-y: auto;
         position: fixed;
         top: 0;
@@ -1219,6 +1279,20 @@ th {
     .mobile-card-table td select,
     .mobile-card-table td textarea {
         text-align: left;
+    }
+
+    .finance-store-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .finance-store-card {
+        padding: 12px;
+    }
+
+    .status-form {
+        align-items: stretch;
+        display: grid;
+        gap: 8px;
     }
 
     .photo-actions {
