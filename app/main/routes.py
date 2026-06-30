@@ -1,5 +1,6 @@
 import csv
 import os
+from html import escape
 from io import StringIO
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -11,11 +12,14 @@ from werkzeug.utils import secure_filename
 
 from app.extensions import db
 from app.models import (
+    Auditoria,
     BALANCO_ITENS_FIXOS,
     BalancoCorredor,
     BalancoMensal,
     CicloBalanco,
     CorredorLoja,
+    FinanceiroGasto,
+    FinanceiroLimite,
     Loja,
     Manutencao,
     Ocorrencia,
@@ -27,6 +31,18 @@ from app.models import (
 
 bp = Blueprint("main", __name__)
 EXTENSOES_IMAGEM = {"png", "jpg", "jpeg", "webp"}
+
+
+def registrar_auditoria(acao, entidade=None, entidade_id=None, descricao=None):
+    db.session.add(
+        Auditoria(
+            usuario_id=current_user.id if current_user.is_authenticated else None,
+            acao=acao,
+            entidade=entidade,
+            entidade_id=entidade_id,
+            descricao=descricao,
+        )
+    )
 
 
 def require_permission(permissao):
@@ -249,6 +265,82 @@ def salvar_foto_manutencao(arquivo):
     return f"uploads/manutencoes/{nome_arquivo}"
 
 
+def salvar_foto_financeiro(arquivo):
+    if not arquivo or not arquivo.filename:
+        return None
+
+    nome_seguro = secure_filename(arquivo.filename)
+    extensao = nome_seguro.rsplit(".", 1)[-1].lower() if "." in nome_seguro else ""
+    if extensao not in EXTENSOES_IMAGEM:
+        raise ValueError("O comprovante deve ser PNG, JPG, JPEG ou WEBP.")
+
+    pasta = os.path.join(current_app.config["UPLOAD_FOLDER"], "financeiro")
+    os.makedirs(pasta, exist_ok=True)
+    nome_arquivo = f"{uuid4().hex}.{extensao}"
+    arquivo.save(os.path.join(pasta, nome_arquivo))
+    return f"uploads/financeiro/{nome_arquivo}"
+
+
+def sincronizar_gasto_manutencao(manutencao):
+    gasto = FinanceiroGasto.query.filter_by(manutencao_id=manutencao.id).first()
+    custo = manutencao.custo or Decimal("0.00")
+
+    if custo <= Decimal("0.00"):
+        if gasto and gasto.status == "pendente":
+            gasto.status = "reprovado"
+            gasto.observacao_analise = "Cancelado automaticamente porque o custo da manutencao ficou zerado."
+            gasto.analisado_por_id = current_user.id
+            gasto.data_analise = datetime.utcnow()
+        return gasto
+
+    mes_referencia = date(manutencao.data_solicitacao.year, manutencao.data_solicitacao.month, 1)
+    descricao = f"Manutencao #{manutencao.id} - {manutencao.area_equipamento}"
+    observacao = manutencao.problema
+    if manutencao.observacao:
+        observacao = f"{observacao}\n\nObservacao: {manutencao.observacao}"
+
+    if not gasto:
+        gasto = FinanceiroGasto(
+            loja_id=manutencao.loja_id,
+            usuario_id=manutencao.usuario_id,
+            manutencao_id=manutencao.id,
+            mes_referencia=mes_referencia,
+            data_gasto=manutencao.data_solicitacao,
+            descricao=descricao,
+            categoria="manutencao",
+            valor=custo,
+            status="pendente",
+            comprovante_path=manutencao.foto_path,
+            observacao=observacao,
+        )
+        db.session.add(gasto)
+        db.session.flush()
+        registrar_auditoria(
+            "Gerou gasto financeiro da manutencao",
+            "FinanceiroGasto",
+            gasto.id,
+            f"{manutencao.loja.nome}: manutencao #{manutencao.id} - {custo}",
+        )
+        return gasto
+
+    valor_anterior = gasto.valor
+    gasto.loja_id = manutencao.loja_id
+    gasto.mes_referencia = mes_referencia
+    gasto.data_gasto = manutencao.data_solicitacao
+    gasto.descricao = descricao
+    gasto.categoria = "manutencao"
+    gasto.valor = custo
+    gasto.observacao = observacao
+    if manutencao.foto_path:
+        gasto.comprovante_path = manutencao.foto_path
+    if valor_anterior != custo and gasto.status != "pendente":
+        gasto.status = "pendente"
+        gasto.analisado_por_id = None
+        gasto.data_analise = None
+        gasto.observacao_analise = "Valor alterado pela manutencao. Necessita nova analise."
+    return gasto
+
+
 @bp.route("/")
 @login_required
 def dashboard():
@@ -258,6 +350,12 @@ def dashboard():
     hoje = date.today()
 
     lojas = lojas_da_visao()
+    usuarios_operacionais = []
+    usuarios_sem_visita = []
+    ocorrencias_antigas = []
+    manutencoes_atrasadas = []
+    balanco_pendente_lojas = []
+    auditorias_recentes = []
 
     if current_user.can_view_all_stores:
         visitas_hoje = Visita.query.filter_by(data_visita=hoje).all()
@@ -267,6 +365,35 @@ def dashboard():
             .order_by(Ocorrencia.data_abertura.desc())
             .all()
         )
+        usuarios_operacionais = (
+            Usuario.query.filter(Usuario.perfil.in_(["supervisor", "operador"]), Usuario.ativo.is_(True))
+            .order_by(Usuario.nome)
+            .all()
+        )
+        usuarios_com_visita = {visita.supervisor_id for visita in visitas_hoje}
+        usuarios_sem_visita = [usuario for usuario in usuarios_operacionais if usuario.id not in usuarios_com_visita]
+        limite_ocorrencia = datetime.combine(hoje - timedelta(days=3), datetime.min.time())
+        ocorrencias_antigas = [
+            ocorrencia for ocorrencia in ocorrencias if ocorrencia.data_abertura <= limite_ocorrencia
+        ]
+        manutencoes_atrasadas = (
+            Manutencao.query.filter(
+                Manutencao.status.in_(["pendente", "em_andamento"]),
+                Manutencao.data_solicitacao < hoje,
+            )
+            .join(Loja)
+            .order_by(Manutencao.data_solicitacao.asc(), Manutencao.id.asc())
+            .all()
+        )
+        ciclo_aberto = CicloBalanco.query.filter_by(status="aberto").order_by(CicloBalanco.data_contagem.desc()).first()
+        if ciclo_aberto:
+            balancos_lancados_ids = {
+                balanco.loja_id
+                for balanco in BalancoMensal.query.filter_by(ciclo_balanco_id=ciclo_aberto.id).all()
+                if balanco_lancado(balanco)
+            }
+            balanco_pendente_lojas = [loja for loja in lojas if loja.id not in balancos_lancados_ids]
+        auditorias_recentes = Auditoria.query.order_by(Auditoria.data_hora.desc()).limit(8).all()
     else:
         visitas_hoje = Visita.query.filter_by(supervisor_id=current_user.id, data_visita=hoje).all()
         ocorrencias = (
@@ -286,6 +413,12 @@ def dashboard():
         visitas_hoje=visitas_hoje,
         pendentes=pendentes,
         ocorrencias=ocorrencias,
+        usuarios_operacionais=usuarios_operacionais,
+        usuarios_sem_visita=usuarios_sem_visita,
+        ocorrencias_antigas=ocorrencias_antigas,
+        manutencoes_atrasadas=manutencoes_atrasadas,
+        balanco_pendente_lojas=balanco_pendente_lojas,
+        auditorias_recentes=auditorias_recentes,
     )
 
 
@@ -299,7 +432,194 @@ def manual():
 @login_required
 def financeiro():
     require_permission("financeiro")
-    return render_template("main/financeiro.html")
+    filtros = intervalo_relatorio(request.args)
+    mes_referencia = filtros["mes_referencia"]
+    lojas = lojas_da_visao()
+    lojas_ids = [loja.id for loja in lojas]
+    loja_id_filtro = request.args.get("loja_id", type=int)
+    loja_selecionada = next((loja for loja in lojas if loja.id == loja_id_filtro), None)
+
+    limites = FinanceiroLimite.query.filter(
+        FinanceiroLimite.loja_id.in_(lojas_ids),
+        FinanceiroLimite.mes_referencia == mes_referencia,
+    ).all()
+    limites_por_loja = {limite.loja_id: limite for limite in limites}
+
+    gastos = (
+        FinanceiroGasto.query.filter(
+            FinanceiroGasto.loja_id.in_(lojas_ids),
+            FinanceiroGasto.mes_referencia == mes_referencia,
+        )
+        .order_by(FinanceiroGasto.data_gasto.desc(), FinanceiroGasto.id.desc())
+        .all()
+    )
+    gastos_por_loja = {loja.id: [] for loja in lojas}
+    for gasto in gastos:
+        gastos_por_loja.setdefault(gasto.loja_id, []).append(gasto)
+    if loja_selecionada:
+        gastos_exibidos = gastos_por_loja.get(loja_selecionada.id, [])
+    else:
+        gastos_exibidos = []
+
+    resumo_lojas = []
+    for loja in lojas:
+        limite = limites_por_loja.get(loja.id)
+        gastos_loja = gastos_por_loja.get(loja.id, [])
+        valor_limite = limite.valor_limite if limite else Decimal("0.00")
+        aprovado = sum((gasto.valor or Decimal("0.00") for gasto in gastos_loja if gasto.status == "aprovado"), Decimal("0.00"))
+        pendente = sum((gasto.valor or Decimal("0.00") for gasto in gastos_loja if gasto.status == "pendente"), Decimal("0.00"))
+        resumo_lojas.append(
+            {
+                "loja": loja,
+                "limite": limite,
+                "valor_limite": valor_limite,
+                "aprovado": aprovado,
+                "pendente": pendente,
+                "saldo": valor_limite - aprovado,
+                "gastos": gastos_loja,
+            }
+        )
+
+    total_limite = sum((item["valor_limite"] for item in resumo_lojas), Decimal("0.00"))
+    total_aprovado = sum((item["aprovado"] for item in resumo_lojas), Decimal("0.00"))
+    total_pendente = sum((item["pendente"] for item in resumo_lojas), Decimal("0.00"))
+
+    return render_template(
+        "main/financeiro.html",
+        mes_valor=mes_referencia.strftime("%Y-%m"),
+        lojas=lojas,
+        resumo_lojas=resumo_lojas,
+        gastos=gastos_exibidos,
+        loja_id_filtro=loja_selecionada.id if loja_selecionada else None,
+        loja_selecionada=loja_selecionada,
+        total_limite=total_limite,
+        total_aprovado=total_aprovado,
+        total_pendente=total_pendente,
+        total_saldo=total_limite - total_aprovado,
+    )
+
+
+@bp.route("/financeiro/limites", methods=["POST"])
+@login_required
+def salvar_limites_financeiros():
+    require_permission("financeiro")
+    if not current_user.is_admin:
+        abort(403)
+
+    mes_referencia, _ = intervalo_mes(request.form.get("mes", ""))
+    lojas = Loja.query.filter_by(ativa=True).order_by(Loja.nome).all()
+    atualizados = 0
+    for loja in lojas:
+        valor_raw = request.form.get(f"limite_{loja.id}", "").strip()
+        observacao = request.form.get(f"observacao_{loja.id}", "").strip()
+        if not valor_raw:
+            continue
+        try:
+            valor = parse_reais(valor_raw)
+        except ValueError:
+            flash(f"Valor invalido para {loja.nome}.", "error")
+            return redirect(url_for("main.financeiro", mes=mes_referencia.strftime("%Y-%m")))
+        limite = FinanceiroLimite.query.filter_by(loja_id=loja.id, mes_referencia=mes_referencia).first()
+        if not limite:
+            limite = FinanceiroLimite(loja_id=loja.id, mes_referencia=mes_referencia)
+            db.session.add(limite)
+        limite.valor_limite = valor
+        limite.observacao = observacao
+        atualizados += 1
+
+    registrar_auditoria(
+        "Atualizou limites financeiros",
+        "FinanceiroLimite",
+        None,
+        f"{atualizados} lojas - {mes_referencia.strftime('%m/%Y')}",
+    )
+    db.session.commit()
+    flash("Limites financeiros salvos.", "success")
+    return redirect(url_for("main.financeiro", mes=mes_referencia.strftime("%Y-%m")))
+
+
+@bp.route("/financeiro/gastos", methods=["POST"])
+@login_required
+def criar_gasto_financeiro():
+    require_permission("financeiro")
+    loja_id = request.form.get("loja_id", type=int)
+    loja = get_loja_visivel(loja_id)
+    if not loja:
+        abort(403)
+
+    descricao = request.form.get("descricao", "").strip()
+    categoria = request.form.get("categoria", "").strip() or "urgente"
+    data_raw = request.form.get("data_gasto", "")
+    valor_raw = request.form.get("valor", "").strip()
+    observacao = request.form.get("observacao", "").strip()
+    comprovante = request.files.get("comprovante")
+    if not descricao or not valor_raw:
+        flash("Informe descricao e valor do gasto.", "error")
+        return redirect(url_for("main.financeiro"))
+
+    try:
+        data_gasto = date.fromisoformat(data_raw) if data_raw else date.today()
+        valor = parse_reais(valor_raw)
+        comprovante_path = salvar_foto_financeiro(comprovante)
+    except ValueError as exc:
+        flash(str(exc) if str(exc) else "Informe os dados do gasto corretamente.", "error")
+        return redirect(url_for("main.financeiro"))
+
+    mes_referencia = date(data_gasto.year, data_gasto.month, 1)
+    gasto = FinanceiroGasto(
+        loja_id=loja.id,
+        usuario_id=current_user.id,
+        mes_referencia=mes_referencia,
+        data_gasto=data_gasto,
+        descricao=descricao,
+        categoria=categoria,
+        valor=valor,
+        status="pendente",
+        comprovante_path=comprovante_path,
+        observacao=observacao,
+    )
+    db.session.add(gasto)
+    db.session.flush()
+    registrar_auditoria(
+        "Lancou gasto financeiro",
+        "FinanceiroGasto",
+        gasto.id,
+        f"{loja.nome}: {descricao} - {valor}",
+    )
+    db.session.commit()
+    flash("Gasto financeiro registrado para analise.", "success")
+    return redirect(url_for("main.financeiro", mes=mes_referencia.strftime("%Y-%m"), loja_id=loja.id))
+
+
+@bp.route("/financeiro/gastos/<int:gasto_id>/status", methods=["POST"])
+@login_required
+def atualizar_status_gasto_financeiro(gasto_id):
+    require_permission("financeiro")
+    if not current_user.is_admin:
+        abort(403)
+
+    gasto = db.get_or_404(FinanceiroGasto, gasto_id)
+    status = request.form.get("status", "")
+    if status not in {"pendente", "aprovado", "reprovado"}:
+        abort(400)
+    status_anterior = gasto.status
+    gasto.status = status
+    gasto.analisado_por_id = current_user.id
+    gasto.data_analise = datetime.utcnow()
+    gasto.observacao_analise = request.form.get("observacao_analise", "").strip()
+    registrar_auditoria(
+        "Atualizou gasto financeiro",
+        "FinanceiroGasto",
+        gasto.id,
+        f"{gasto.loja.nome}: {status_anterior} -> {status}",
+    )
+    db.session.commit()
+    flash("Status do gasto atualizado.", "success")
+    loja_id_filtro = request.form.get("loja_id_filtro", type=int)
+    argumentos = {"mes": gasto.mes_referencia.strftime("%Y-%m")}
+    if loja_id_filtro:
+        argumentos["loja_id"] = loja_id_filtro
+    return redirect(url_for("main.financeiro", **argumentos))
 
 
 @bp.route("/manutencoes")
@@ -430,22 +750,29 @@ def criar_manutencao():
         flash(str(exc) if str(exc) else "Informe as datas e o custo corretamente.", "error")
         return redirect(url_for("main.manutencoes", loja_id=loja.id))
 
-    db.session.add(
-        Manutencao(
-            loja_id=loja.id,
-            usuario_id=current_user.id,
-            categoria=categoria,
-            area_equipamento=area_equipamento,
-            problema=problema,
-            tipo=tipo,
-            responsavel=responsavel,
-            custo=custo,
-            data_solicitacao=data_solicitacao,
-            data_atendimento=data_atendimento or (date.today() if status == "concluido" else None),
-            status=status,
-            foto_path=foto_path,
-            observacao=observacao,
-        )
+    manutencao = Manutencao(
+        loja_id=loja.id,
+        usuario_id=current_user.id,
+        categoria=categoria,
+        area_equipamento=area_equipamento,
+        problema=problema,
+        tipo=tipo,
+        responsavel=responsavel,
+        custo=custo,
+        data_solicitacao=data_solicitacao,
+        data_atendimento=data_atendimento or (date.today() if status == "concluido" else None),
+        status=status,
+        foto_path=foto_path,
+        observacao=observacao,
+    )
+    db.session.add(manutencao)
+    db.session.flush()
+    sincronizar_gasto_manutencao(manutencao)
+    registrar_auditoria(
+        "Criou manutencao",
+        "Manutencao",
+        manutencao.id,
+        f"{loja.nome} - {area_equipamento} - status {status}",
     )
     db.session.commit()
     flash("Manutenção registrada.", "success")
@@ -475,6 +802,8 @@ def atualizar_status_manutencao(manutencao_id):
         flash("Informe a data de atendimento e o custo corretamente.", "error")
         return redirect(url_for("main.manutencoes", historico_loja_id=manutencao.loja_id, _anchor="historico"))
 
+    status_anterior = manutencao.status
+    custo_anterior = manutencao.custo
     manutencao.status = status
     if data_atendimento:
         manutencao.data_atendimento = data_atendimento
@@ -484,6 +813,13 @@ def atualizar_status_manutencao(manutencao_id):
         manutencao.custo = custo
     if observacao:
         manutencao.observacao = observacao
+    sincronizar_gasto_manutencao(manutencao)
+    registrar_auditoria(
+        "Atualizou manutencao",
+        "Manutencao",
+        manutencao.id,
+        f"{manutencao.loja.nome}: status {status_anterior} -> {status}; custo {custo_anterior} -> {manutencao.custo}",
+    )
     db.session.commit()
     flash("Status da manutenção atualizado.", "success")
     if request.form.get("origem") == "alerta":
@@ -861,6 +1197,12 @@ def salvar_balancos():
                 balanco.data_revisao = datetime.utcnow()
                 balanco.revisado_por_id = current_user.id
                 recalcular_totais_balanco(balanco)
+                registrar_auditoria(
+                    "Revisou balanco",
+                    "BalancoMensal",
+                    balanco.id,
+                    f"{balanco.loja.nome} - ciclo {ciclo.competencia_mes.strftime('%m/%Y')}",
+                )
         else:
             valores = []
             valores_por_corredor = {item.corredor_id: item for item in balanco.corredores} if balanco else {}
@@ -899,6 +1241,12 @@ def salvar_balancos():
                 item.valor_fechado = valor
                 item.observacao = observacao
             recalcular_totais_balanco(balanco)
+            registrar_auditoria(
+                "Lancou balanco",
+                "BalancoMensal",
+                balanco.id,
+                f"{balanco.loja.nome}: {len(valores)} itens/corredores",
+            )
 
     db.session.commit()
     flash("Balanço mensal salvo.", "success")
@@ -927,6 +1275,13 @@ def criar_ciclo_balanco():
         observacao=observacao,
     )
     db.session.add(ciclo)
+    db.session.flush()
+    registrar_auditoria(
+        "Liberou balanco",
+        "CicloBalanco",
+        ciclo.id,
+        f"{competencia.strftime('%m/%Y')} - contagem {data_contagem.strftime('%d/%m/%Y')}",
+    )
     db.session.commit()
     flash("Balanço liberado para lançamento.", "success")
     return redirect(url_for("main.balancos", ciclo_id=ciclo.id))
@@ -947,7 +1302,14 @@ def atualizar_status_ciclo_balanco(ciclo_id):
         flash("Status de balanço inválido.", "error")
         return redirect(url_for("main.balancos", ciclo_id=ciclo.id))
 
+    status_anterior = ciclo.status
     ciclo.status = status
+    registrar_auditoria(
+        "Atualizou status do balanco",
+        "CicloBalanco",
+        ciclo.id,
+        f"{ciclo.competencia_mes.strftime('%m/%Y')}: {status_anterior} -> {status}",
+    )
     db.session.commit()
     flash("Status do balanço atualizado.", "success")
     if status == "aberto":
@@ -991,28 +1353,25 @@ def exportar_relatorio():
     balancos_por_loja = {balanco.loja_id: balanco for balanco in balancos}
     anteriores_por_loja = {balanco.loja_id: balanco for balanco in balancos_anteriores}
 
-    arquivo = StringIO()
-    writer = csv.writer(arquivo, delimiter=";")
-    writer.writerow(
-        [
-            "Loja",
-            "Visitas",
-            "Vendas nas visitas",
-            "Media por visita",
-            "Valor fechado original",
-            "Valor revisado",
-            "Diferenca da revisao",
-            "Valor considerado",
-            "Mes anterior",
-            "Diferenca",
-            "Variacao %",
-            "Problemas",
-            "Abertas",
-            "Em andamento",
-            "Resolvidas",
-            "Canceladas",
-        ]
-    )
+    cabecalho = [
+        "Loja",
+        "Visitas",
+        "Vendas nas visitas",
+        "Media por visita",
+        "Valor fechado original",
+        "Valor revisado",
+        "Diferenca da revisao",
+        "Valor considerado",
+        "Mes anterior",
+        "Diferenca",
+        "Variacao %",
+        "Problemas",
+        "Abertas",
+        "Em andamento",
+        "Resolvidas",
+        "Canceladas",
+    ]
+    linhas = []
 
     for loja in lojas:
         visitas_loja = visitas_por_loja.get(loja.id, [])
@@ -1029,7 +1388,7 @@ def exportar_relatorio():
         diferenca = valor_balanco - valor_anterior
         percentual = (diferenca / valor_anterior * 100) if valor_anterior else None
 
-        writer.writerow(
+        linhas.append(
             [
                 loja.nome,
                 len(visitas_loja),
@@ -1050,8 +1409,36 @@ def exportar_relatorio():
             ]
         )
 
-    conteudo = "\ufeff" + arquivo.getvalue()
     fim_nome = (fim - timedelta(days=1)).isoformat()
+    formato = request.args.get("formato", "csv")
+    if formato == "xls":
+        tabela = [
+            "<html><head><meta charset='utf-8'></head><body><table border='1'>",
+            "<tr>" + "".join(f"<th>{escape(str(coluna))}</th>" for coluna in cabecalho) + "</tr>",
+        ]
+        for linha in linhas:
+            tabela.append("<tr>" + "".join(f"<td>{escape(str(valor))}</td>" for valor in linha) + "</tr>")
+        tabela.append("</table></body></html>")
+        nome = f"relatorio-{filtros['periodo']}-{inicio.isoformat()}-{fim_nome}.xls"
+        return Response(
+            "\ufeff" + "\n".join(tabela),
+            mimetype="application/vnd.ms-excel; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename={nome}"},
+        )
+    if formato == "pdf":
+        return render_template(
+            "main/relatorio_pdf.html",
+            cabecalho=cabecalho,
+            linhas=linhas,
+            periodo_label=filtros["periodo_label"],
+            gerado_em=datetime.now(),
+        )
+
+    arquivo = StringIO()
+    writer = csv.writer(arquivo, delimiter=";")
+    writer.writerow(cabecalho)
+    writer.writerows(linhas)
+    conteudo = "\ufeff" + arquivo.getvalue()
     nome = f"relatorio-{filtros['periodo']}-{inicio.isoformat()}-{fim_nome}.csv"
     return Response(
         conteudo,
