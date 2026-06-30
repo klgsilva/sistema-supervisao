@@ -1,4 +1,7 @@
 import os
+from datetime import timedelta, timezone
+from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfoNotFoundError
 
 from flask import Flask
 
@@ -30,5 +33,17 @@ def create_app(config_object="config.Config"):
             value = 0
         texto = f"{float(value):,.2f}"
         return "R$ " + texto.replace(",", "X").replace(".", ",").replace("X", ".")
+
+    @app.template_filter("datetime_local")
+    def datetime_local(value, formato="%d/%m/%Y %H:%M"):
+        if not value:
+            return "-"
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        try:
+            timezone_local = ZoneInfo(app.config.get("TIMEZONE", "America/Manaus"))
+        except ZoneInfoNotFoundError:
+            timezone_local = timezone(timedelta(hours=-4))
+        return value.astimezone(timezone_local).strftime(formato)
 
     return app
