@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 
 from app.extensions import db
@@ -857,7 +858,12 @@ def relatorios():
     mes_passado = mes_anterior(mes_referencia)
     balancos_query = BalancoMensal.query.filter(BalancoMensal.loja_id.in_(lojas_ids))
     if ciclo:
-        balancos_query = balancos_query.filter(BalancoMensal.ciclo_balanco_id == ciclo.id)
+        balancos_query = balancos_query.filter(
+            or_(
+                BalancoMensal.ciclo_balanco_id == ciclo.id,
+                BalancoMensal.mes_referencia == ciclo.competencia_mes,
+            )
+        )
     else:
         balancos_query = balancos_query.filter(BalancoMensal.mes_referencia == mes_referencia)
     balancos = balancos_query.all()
@@ -1163,11 +1169,7 @@ def salvar_balancos():
 
         balanco = BalancoMensal.query.filter_by(loja_id=loja_id, ciclo_balanco_id=ciclo.id).first()
         if not balanco:
-            balanco = BalancoMensal.query.filter_by(
-                loja_id=loja_id,
-                mes_referencia=inicio,
-                ciclo_balanco_id=None,
-            ).first()
+            balanco = BalancoMensal.query.filter_by(loja_id=loja_id, mes_referencia=inicio).first()
 
         if current_user.is_admin:
             if not balanco:
